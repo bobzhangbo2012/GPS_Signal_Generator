@@ -14,7 +14,7 @@ function [ byte_array ] = ConvertToBytesAndPad( input_array )
 %               Created by Kurt Pedrosa  -- May 5th 2017                  %
 % ----------------------------------------------------------------------- %
     [ number_of_rows , number_of_columns ] = ...
-        size(input_array);
+        size(input_array)
 
     % Create a temp array to hold values
     % This is a 4 by 10 array because each column will hold 32 bits divided by
@@ -26,15 +26,16 @@ function [ byte_array ] = ConvertToBytesAndPad( input_array )
     %   | word_1( 15 - 8 )  | word_2( 15 - 8 )  |
     %   | word_1( 7 - 0 )   | word_2( 7  - 0 )  |
     %   +---------------------------------------+
-    byte_array = zeros(4,10);
+    byte_array_temp = zeros(4,10);
 
     % Iterate thru each row
     for count_rows = 1:number_of_rows
         % Break down each 8-bits into bytes
-        byte_array( 1, number_of_rows ) = Convert2Byte( input_array( count_rows, 1:8 ));
-        byte_array( 2, number_of_rows ) = Convert2Byte( input_array( count_rows, [ 9:17 ] ));
-        byte_array( 3, number_of_rows ) = Convert2Byte( input_array( count_rows, [ 18:27 ] ));
-        byte_array( 4, number_of_rows ) = Convert2Byte( [ input_array( count_rows, [ 27:30 ]) 0 0 ] ); % Padding two bits at the LSB
+        byte_array( 1, count_rows ) = Convert2Byte( input_array( count_rows, 1:8 ));
+        byte_array( 2, count_rows ) = Convert2Byte( input_array( count_rows, [ 9:16 ] ));
+        byte_array( 3, count_rows ) = Convert2Byte( input_array( count_rows, [ 17:24 ] ));
+        byte_array( 4, count_rows ) = Convert2Byte( [ input_array( count_rows, [ 25:30 ]) 0 0 ] ); % Padding two bits at the LSB
+
     end
 end
 
@@ -43,16 +44,17 @@ end
 function byte_value = Convert2Byte( eight_bits_input )
     % Ensure only 8-bits are beingh received
     if length( eight_bits_input ) == 8
+
         byte_value = '';
         % Takes in an array. First need to be converted to a string so it
         %   can be used by the bin2dec() function.
         for count_bits = 1:8
             if eight_bits_input( count_bits ) == 1
                 bit = '1';
-                strcat( byte_value, bit );
+                byte_value = [ byte_value bit ];
             else
                 bit = '0';
-                strcat( byte_value, bit );
+                byte_value = [ byte_value bit ];
             end
         end
 
