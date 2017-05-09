@@ -252,7 +252,7 @@ end
 
 function word_9 = GenerateWord9( D_star )
 % ------------------------------------------------------------------------%
-% GenerateWord8() - Generates a 30 bit word containg , SV clock correction
+% GenerateWord9() - Generates a 30 bit word containg , SV clock correction
 %   term A_f2 and A_f1 and Parity bits.
 %
 %   Inputs:     D_star - Bits 29 and 30 of word 8
@@ -280,7 +280,7 @@ end
 
 function word_10 = GenerateWord10( D_star )
 % ------------------------------------------------------------------------%
-% GenerateWord8() - Generates a 30 bit word containg , SV Clock correction
+% GenerateWord10() - Generates a 30 bit word containg , SV Clock correction
 %   term A_F0, Noninformation bearing bits for Parity comp, and Parity bits.
 %
 %   Inputs:     D_star - Bits 29 and 30 of word 9
