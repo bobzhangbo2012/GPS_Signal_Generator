@@ -10,10 +10,10 @@ function [ subframe_2_300_bits ] = GenerateSubframe2( ...
     %       Word 3 - IODE (8-bits), C_rs (16-bits)                            %
     %       Word 4 - Delta_n (16-bits), M_not (MSB, 8-bits)                   %
     %       Word 5 - M_not(LSB 24-bits)                                       %
-    %       Word 6 - C_US (16-bits), e (MSB, 9-bits)                          %
-    %       Word 7 - e (LSB, 24-bits)                                         %
+    %       Word 6 - C_UC (16-bits), eccentricity (MSB, 9-bits)               %
+    %       Word 7 - eccentricity (LSB, 24-bits)                              %
     %       Word 8 - C_US (16 bits), Root_a (MSB, 8-bits)                     %
-    %       Word 9 - Root_a (LSB, 24-bits)                                    %
+    %       Word 9 - sqrt_a (LSB, 24-bits)                                    %
     %       Word 10 - t_oe (16-bits,), Fit Interval Flag (1-bit),AODO(5-bits) %
     %                                                                         %
     %                                                                         %
@@ -31,6 +31,11 @@ function [ subframe_2_300_bits ] = GenerateSubframe2( ...
     % observed values from:                                                   %
     %   http://www.colorado.edu/geography/gcraft/notes/gps/ephclock.html      %
     %                           March 10th 2017                               %
+    %                                                                         %
+    %   + by Kurt: Values for C_UC, e, C_Us, Root_a, t_oe changed to real     %
+    % observed values from:                                                   %
+    %   http://www.colorado.edu/geography/gcraft/notes/gps/ephclock.html      %
+    %                           March 14th 2017                               %
     % ----------------------------------------------------------------------- %
 
     % Define Frame
@@ -111,7 +116,7 @@ function word_3 = GenerateWord3( D_star )
 
     % Pack'em all into a 24-bit number
     word_3_no_parity = ...
-        [ IODE C_rs ];
+        [ IDOE C_rs ];
 
     word_3 = [ word_3_no_parity GpsParityMaker( 0, word_3_no_parity, D_star ) ];
 end
@@ -172,7 +177,7 @@ function word_5 = GenerateWord5( D_star )
     %   Note: 1 sem-circle = 3.1415926535 radians
     M_not_LSB = [ 1 0 1 1 0 0 0 0 1 1 1 1 1 1 1 1 1 0 0 1 1 1 1 1 ];
 
-
+    % Pack'em all into a 24-bit number
     word_5_no_parity = M_not_LSB ;
 
     word_5 = [ word_5_no_parity ...
@@ -181,22 +186,44 @@ end
 
 function word_6 = GenerateWord6( D_star )
 % ------------------------------------------------------------------------%
-% GenerateWord6() - Generates a 30 bit word containg , Reserve bits,
-%   and Parity bits.
+% GenerateWord6() - Generates a 30 bit word containg ,C_UC (16-bits),
+% eccentricity (MSB, 8-bits) and Parity bits.
 %
 %   Inputs:     D_star - Bits 29 and 30 of word 5
 % ------------------------------------------------------------------------%
-    % Bits 1 thru 24 are Reserved
-    % As per SPS Signal Spec NAVSTAR 2nd edition Jun 2 1995
-    %   reserved bits in subframe 2 are:
-    %   'All spare and reserved data fields support valid parity within
-    %   thier respective words. Contents of spare data field are
-    %   alternating ones and zeros until they are allocated for a new
-    %   function.' See Table 2-6
 
-    reserved_bits = [ 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0];
+    % Define C_UC
+    % C_UC is the Amplitude of the Cosine Hamronic Correction Term to the
+    %   Argument of Latitude
+    % C_UC is in radians, has 16-bits and a Scale Factor of 2^-29
+    %       C_UC =  -3.33972E-06 =  -3.33972E-06/2^-29 = -1.7930e+03
+    %       0000011100000000b
+    % Note: if value is negative? Not considered in this simulation. Above
+    %   number, -3.33972E-06, is represented as a positive binary.
+    C_UC = [ 0 0 0 0 0 1 1 1 0 0 0 0 0 0 0 0 ];
 
-    word_6_no_parity = reserved_bits ;
+    % Define e
+    % eccentricity is Deviation from orbit
+    % eccentricity has 32 bits ( 8-bits MSB in Word 6 subframe 2 )
+    % eccentricity is dimensionless and has a Scale Factor of 2^-33
+    % eccentricity has a range o 0.0 to 0.03
+    %       e = 0.00354898 = 0.00354898/2^-33 = 3.0486e+07
+    %       00000001 msb110100010010110000000010 lsb
+    eccentricity_dec = 0.00354898;
+
+    % Check range
+    %   Note from the author: " I do not like that it checks the range twice.
+    %        Here in word 6 and also in word 7. Need fix." -kp
+    if eccentricity_dec < 0.0 || eccentricity_dec > 0.03
+        error( 'Eccentricity value passed is out-of-range. Check Word 7 Subframe 2.' );
+    else
+        %eccentricity = [ 1 1 0 1 0 0 0 1 0 0 1 0 1 1 0 0 0 0 0 0 0 0 1 0 ]; % test
+        eccentricity = str2bin_array( dec2bin( eccentricity_dec/2^-33, 32 ) ); % Returns a 32-bit binary array
+        eccentricity = eccentricity(1:8); % Take 24-bit LSB only
+    end
+
+    % Pack'em all into a 24-bit number
+    word_6_no_parity = [ C_UC eccentricity ];
 
     word_6 = [ word_6_no_parity ...
         GpsParityMaker(0,  word_6_no_parity, D_star ) ];
@@ -204,32 +231,33 @@ end
 
 function word_7 = GenerateWord7( D_star )
 % ------------------------------------------------------------------------%
-% GenerateWord7() - Generates a 30 bit word containg , Reserve bits,
-%   SV clock correction T GD, and Parity bits.
+% GenerateWord7() - Generates a 30 bit word containg ,eccentricity ( 24 LSB )
+% and Parity bits.
 %
 %   Inputs:     D_star - Bits 29 and 30 of word 6
 % ------------------------------------------------------------------------%
-    % Bits 1 thru 16 are Reserved
-    % As per SPS Signal Spec NAVSTAR 2nd edition Jun 2 1995
-    %   reserved bits in subframe 2 are:
-    %   'All spare and reserved data fields support valid parity within
-    %   thier respective words. Contents of spare data field are
-    %   alternating ones and zeros until they are allocated for a new
-    %   function.' See Table 2-6
+    % Define e
+    % eccentricity is Deviation from orbit
+    % eccentricity has 32 bits ( 24-bits LSB in Word 7 subframe 2 )
+    % eccentricity is dimensionless and has a Scale Factor of 2^-33
+    % eccentricity has a range o 0.0 to 0.03
+    %       e = 0.00354898 = 0.00354898/2^-33 = 3.0486e+07
+    %       00000001 msb 110100010010110000000010 lsb
+    eccentricity_dec = 0.00354898;
 
-    reserved_bits = [ 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0];
+    % Check range
+    %   Note from the author: " I do not like that it checks the range twice.
+    %        Here in word 7 and also in word 6. Need fix." -kp
+    if eccentricity_dec < 0.0 || eccentricity_dec > 0.03
+        error( 'Eccentricity value passed is out-of-range. Check Word 7 Subframe 2.' );
+    else
+        %eccentricity = [ 1 1 0 1 0 0 0 1 0 0 1 0 1 1 0 0 0 0 0 0 0 0 1 0 ]; % test
+        eccentricity = str2bin_array( dec2bin( eccentricity_dec/2^-33, 32 ) ); % Returns a 32-bit binary array
+        eccentricity = eccentricity(9:end); % Take 24-bit LSB only
+    end
 
-    % As Per GPS System Engineering and Integration Interfeace Specs
-    %   IS-GPS-200 - NAVSTAR GPS Space Segment/Navigation User
-    %   Segment Interface - 28 Jul 16:
-    %   'Bits 17 through 24 of word seven contain the L1-L2 correctoin
-    %   term, T_gd, for the benefit of "L1 only" or "L2 only" users.
-    %   the related user algorithm is given in paragraph 20.3.3.3.'
-    %  NOTE: For thos project these bits are set to zero. Meaning...
-    %   there are no correction needed.
-    message_correction_t_gd = [ 0 0 0 0 0 0 0 0 ];
-
-    word_7_no_parity = [reserved_bits message_correction_t_gd ];
+    % Pack'em all into a 24-bit number
+    word_7_no_parity = eccentricity;
 
     word_7 = [ word_7_no_parity ...
         GpsParityMaker( 0, word_7_no_parity, D_star ) ];
@@ -237,31 +265,39 @@ end
 
 function word_8 = GenerateWord8( D_star )
 % ------------------------------------------------------------------------%
-% GenerateWord8() - Generates a 30 bit word containg , IODC LSB 8 bits,
-%   T_oc SV clock correction, and Parity bits.
+% GenerateWord8() - Generates a 30 bit word containg ,C_US (16 bits),
+% sqrt_a (MSB, 8-bits)  and Parity bits.
 %
 %   Inputs:     D_star - Bits 29 and 30 of word 7
 % ------------------------------------------------------------------------%
-    % Bits 1 thru 8 are the LSB of the IODC. the 2 MSB of the IODC are
-    %   sent on word 3 of subframe 1. As per this project, all IODC
-    %   bits have been set to 0.
-    IODC_LSB_8_bits = [ 0 0 0 0 0 0 0 0 ];
 
-    % As Per GPS System Engineering and Integration Interfeace Specs
-    %   IS-GPS-200 - NAVSTAR GPS Space Segment/Navigation User
-    %   Segment Interface - 28 Jul 16:
-    %   20.3.3.3.1.8 SV Clock Correction:
-    %       Bits 9 through 24 of word eight ... contain the parameter
-    %       needed by the users for apparent SV clock correction.
-    %     Note: toc - 9 thru 24 bits of word 8 - subframe 1
-    %           af2 - 1 thru 8 bits of word 9 - subframe 1
-    %           af1 - 9 thru 24 bits of word 9 - subframe 1
-    %           af0 - 1 thru 22 bits of word 10 - subrame 1
-    % NOTE: For this project these bits are set to zero. Meaning...
-    %   no correction is needed.
-    clock_correction_t_oc = [ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ];
+    % Define C_US
+    % C_US is the Amplitude of the Sine Hamronic Correction Term to the
+    %   Argument of Latitude
+    % C_US is in radians, has 16-bits and a Scale Factor of 2^-29
+    %       C_UC =  1.06301E-05 =  1.06301E-05/2^-29 = 5.7070e+03
+    %       0001011001001010b
+    C_US = [ 0 0 0 1 0 1 1 0 0 1 0 0 1 0 1 0 ];
 
-    word_8_no_parity = [IODC_LSB_8_bits clock_correction_t_oc ];
+    % Define sqrt_a
+    % sqrt_a is the Square Root of the Semi-Major Axis
+    % sqrt_a has 32 bits (8-bit MSB in word 9 Subframe 2)
+    % sqrt_a is the squar root of a meter and has a Scale Factor of 2^-19
+    % sqrt_a has a range of 2530 to 8192
+    %   5153.79 = 5153.79/2^-19 = 2.7021e+09 = 10100001 msb 000011100101000111101011 lsb
+    sqrt_a_dec = 5153.79;
+
+    % Check range
+    % Note from the author: "Again, checking range twice. I don't like it!" -kp
+    if sqrt_a_dec < 2530 || sqrt_a_dec > 8192
+        error('Squre Root of the Semi-Major Axis is out-of-range. Check Word 8 of Subframe 2.');
+    else
+        sqrt_a = str2bin_array( dec2bin( sqrt_a_dec/2^-19, 32 ) );
+        sqrt_a = sqrt_a( 1:8 );
+    end
+
+    % Pack'em all into a 24-bit number
+    word_8_no_parity = [ C_US sqrt_a ];
 
     word_8 = [ word_8_no_parity ...
         GpsParityMaker( 0, word_8_no_parity, D_star ) ];
@@ -274,22 +310,25 @@ function word_9 = GenerateWord9( D_star )
 %
 %   Inputs:     D_star - Bits 29 and 30 of word 8
 % ------------------------------------------------------------------------%
-    % As Per GPS System Engineering and Integration Interfeace Specs
-    %   IS-GPS-200 - NAVSTAR GPS Space Segment/Navigation User
-    %   Segment Interface - 28 Jul 16:
-    %   20.3.3.3.1.8 SV Clock Correction:
-    %       Bits 9 through 24 of word eight ... contain the parameter
-    %       needed by the users for apparent SV clock correction.
-    %     Note: toc - 9 thru 24 bits of word 8 - subframe 1
-    %           af2 - 1 thru 8 bits of word 9 - subframe 1
-    %           af1 - 9 thru 24 bits of word 9 - subframe 1
-    %           af0 - 1 thru 22 bits of word 10 - subrame 1
-    % NOTE: For this project these bits are set to zero. Meaning...
-    %   no correction is needed.
-    clock_correction_a_f2 = [ 0 0 0 0 0 0 0 0];
-    clock_correction_a_f1 = [ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0];
+    % Define sqrt_a
+    % sqrt_a is the Square Root of the Semi-Major Axis
+    % sqrt_a has 32 bits (8-bit MSB in word 9 Subframe 2)
+    % sqrt_a is the squar root of a meter and has a Scale Factor of 2^-19
+    % sqrt_a has a range of 2530 to 8192
+    %   5153.79 = 5153.79/2^-19 = 2.7021e+09 = 10100001 msb 000011100101000111101011 lsb
+    sqrt_a_dec = 5153.79;
 
-    word_9_no_parity = [clock_correction_a_f2 clock_correction_a_f1 ];
+    % Check range
+    % Note from the author: "Again, checking range twice. I don't like it!" -kp
+    if sqrt_a_dec < 2530 || sqrt_a_dec > 8192
+        error('Squre Root of the Semi-Major Axis is out-of-range. Check Word 9 of Subframe 2.');
+    else
+        sqrt_a = str2bin_array( dec2bin( sqrt_a_dec/2^-19, 32 ) );
+        sqrt_a = sqrt_a( 9:end );
+    end
+
+    % Pack'em all into a 24-bit number
+    word_9_no_parity = [ sqrt_a ];
 
     word_9 = [ word_9_no_parity ...
         GpsParityMaker( 0, word_9_no_parity, D_star ) ];
@@ -297,27 +336,56 @@ end
 
 function word_10 = GenerateWord10( D_star )
 % ------------------------------------------------------------------------%
-% GenerateWord8() - Generates a 30 bit word containg , SV Clock correction
-%   term A_F0, Noninformation bearing bits for Parity comp, and Parity bits.
+% GenerateWord8() - Generates a 30 bit word containg , t_oe (16-bits,),
+% Fit Interval Flag (1-bit),AODO(5-bits) and Parity bits.
 %
 %   Inputs:     D_star - Bits 29 and 30 of word 9
 % ------------------------------------------------------------------------%
-    % As Per GPS System Engineering and Integration Interfeace Specs
-    %   IS-GPS-200 - NAVSTAR GPS Space Segment/Navigation User
-    %   Segment Interface - 28 Jul 16:
-    %   20.3.3.3.1.8 SV Clock Correction:
-    %       Bits 9 through 24 of word eight ... contain the parameter
-    %       needed by the users for apparent SV clock correction.
-    %     Note: toc - 9 thru 24 bits of word 8 - subframe 1
-    %           af2 - 1 thru 8 bits of word 9 - subframe 1
-    %           af1 - 9 thru 24 bits of word 9 - subframe 1
-    %           af0 - 1 thru 22 bits of word 10 - subrame 1
-    % NOTE: For this project these bits are set to zero. Meaning...
-    %   no correction is needed.
-    clock_correction_a_f0 = ...
-        [ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0];
 
-    word_10_no_parity = clock_correction_a_f0;
+    % Define t_oe
+    % t_oe is Reference Time Ephemeris ( for more info go to paragraph 20.3.4.5 )
+    % t_oe has 16 bits and a Scale Factor of 2^4.
+    % t_oe is counted in units of seconds.
+    % t_oe has a range of 0 to 604,784 seconds.
+    %   252000 = 25200/2^4 = 1575 = 0000011000100111
+    t_oe_dec = 252000;
+
+    if t_oe_dec < 0 || t_oe_dec > 604784
+        error('Reference Time Ephemeris is out-of-range. Check Word 10 of Subframe 2.');
+    else
+        t_oe = str2bin_array( dec2bin( t_oe_dec/2^4, 16 ) )
+    end
+
+    % Define Fit Interval Flag
+    % A "fit interval" flag indicates whether the ephemerides are based on a
+    %   4-hour fit interval or a Greater than 4-hours.
+    % Paragraph 6.2.3 defines the following operational intervals:
+    %       Normal - SV normal ops: fit flag = 0 ( ref. 20.3.3.4.3.1)
+    %       Short-term Extended: fit flag = 1 & IODE < 240 ( ref. 20.3.4.4 )
+    %       Long-term Extended: fit flag = 1 & IODE between 240-255
+    fit_interval_flag = 0 % 4-hours fit interval
+    %fit_interval_flag = 1; % >4-hours fit interval
+
+    % Define AODO
+    % aodo is the Age of Data Offset. Is a term used for teh Navigation Message
+    %   Correction table ( NMCT ) contained in subframe 4 ( ref 20.3.3.5.1.9 )
+    % aodo enables the user to determine the validity time for the NMCT Data
+    %   provided in subframe 4 of the transmitting SV. Algorithm given in 20.3.3.4.4
+    % aodo is 5-bits unsigned term w/ an LSB Scale Factor of 900
+    % aodo has a range between 0 and 31.
+    % aodo has units of seconds.
+    % In paragraph 20.3.3.4.4 NMCT Validity time states :
+    %   If AODO term is 27900 ( 11111 binary ) then NMCT data is invalid.
+    %   if AODO term is less than 27900 then user shall compute the validity
+    %       time for NMCT ( t_nmct ) using the t_oe and aodo term.
+    %
+    %   OFFSET = t_oe [ modulo 7200 ]
+    %   if OFFEST == 0 then t_nmct = t_oe - aodo
+    %   if OFFSET > 0  then t_nmct = t_oe - OFFSET + 7200 - AODO
+    aodo = [ 0 0 0 0 0 ]
+
+    % Pack'em all into a 22-bit number THIS HAS FORCE PARITY!
+    word_10_no_parity = [ t_oe fit_interval_flag aodo ];
 
     word_10 = [ word_10_no_parity ...
         GpsParityMaker( 1, word_10_no_parity, D_star ) ];
