@@ -17,6 +17,13 @@ function [ subframe_1_300_bits ] = GenerateSubframe1( ...
 %                                                                         %
 % ----------------------------------------------------------------------- %
 %               Created by Kurt Pedrosa  -- Feb 20th 2017                 %
+%                                                                         %
+%      CHANGE LOG:                                                        %
+%                                                                         %
+%   + by Kurt: Values for IODC changed to real observed values from:      %
+%   http://www.colorado.edu/geography/gcraft/notes/gps/ephclock.html      %
+%                           March 10th 2017                               %
+% ----------------------------------------------------------------------- %
 % ----------------------------------------------------------------------- %
 
 % Define Frame
@@ -101,6 +108,20 @@ function word_3 = GenerateWord3( GPS_week_number, D_star )
     sv_health = [ 0 0 0 0 0 0 ];
 
     % Define IODC
+    % Bits 1 thru 8 are the LSB of the IODC. the 2 MSB of the IODC are
+    %   sent on word 3 of subframe 1. As per this project, all IODC
+    %   bits have been set to 0.
+    %   This provides the user with a convenient means for detecting
+    %   any change in the ephemirs represenation parameters.
+    % Note: IODE is provided in both Subframe 2 and 3 for the purpose of
+    %       comparison.
+    % IMPORTANT: IODE is compared to the 8 LSB of the IODC in subframe 1.
+    %       If the three terms ( IODE subframe 2 and 3, and IODC subframe
+    %       1 ) do NOT match, a set curover has occurred and new data
+    %       must be collected.
+    %       Timing and constrained defined in Paragraph 20.3.4.4
+    %   For Simulation IODC = 157 = 0010011101b
+    % Therefo IODC in word 3 of subframe 1 MUST be 00
     IODC = [0 0];
 
     % Pack'em all into a 24-bit number
@@ -225,10 +246,22 @@ function word_8 = GenerateWord8( D_star )
 %
 %   Inputs:     D_star - Bits 29 and 30 of word 7
 % ------------------------------------------------------------------------%
-    % Bits 1 thru 8 are the LSB of the IODC. the 2 MSB of the IODC are
-    %   sent on word 3 of subframe 1. As per this project, all IODC
-    %   bits have been set to 0.
-    IODC_LSB_8_bits = [ 0 0 0 0 0 0 0 0 ];
+% Define IODC
+% Bits 1 thru 8 are the LSB of the IODC. the 2 MSB of the IODC are
+%   sent on word 3 of subframe 1. As per this project, all IODC
+%   bits have been set to 0.
+%   This provides the user with a convenient means for detecting
+%   any change in the ephemirs represenation parameters.
+% Note: IODE is provided in both Subframe 2 and 3 for the purpose of
+%       comparison.
+% IMPORTANT: IODE is compared to the 8 LSB of the IODC in subframe 1.
+%       If the three terms ( IODE subframe 2 and 3, and IODC subframe
+%       1 ) do NOT match, a set curover has occurred and new data
+%       must be collected.
+%       Timing and constrained defined in Paragraph 20.3.4.4
+%   For Simulation IODC = 157 = 0010011101b
+% Therefo IODC in word 8 of subframe 1 MUST be 10011101
+IODC_LSB_8_bits = [ 1 0 0 1 1 1 0 1 ];
 
     % As Per GPS System Engineering and Integration Interfeace Specs
     %   IS-GPS-200 - NAVSTAR GPS Space Segment/Navigation User

@@ -13,9 +13,8 @@ function [ subframe_3_300_bits ] = GenerateSubframe3( ...
     %       Word 6 - i_not (24-bits LSB )                                     %
     %       Word 7 - C_rc (16-bits), omega (8-bits MSB)                       %
     %       Word 8 - omega (24 bits LSB)                                      %
-    %       Word 9 - omega_dot ( 24-bits)                                    %
-    %       Word 10 - IODE (8-bits,), IDOT (14-bit),AODO(5-bits) %
-    %                                                                         %
+    %       Word 9 - omega_dot ( 24-bits)                                     %
+    %       Word 10 - IODE (8-bits,), IDOT (14-bit)          %
     %                                                                         %
     %       INPUT:                                                            %
     %         - GPS_week_number - A 10-bit MSB of the 29-bit z-count          %
@@ -195,8 +194,45 @@ function word_7 = GenerateWord7( D_star )
 %   Inputs:     D_star - Bits 29 and 30 of word 6
 % ------------------------------------------------------------------------%
 
+    % Define C_rc
+    %   C_rc is the Amplitude of the Cosine Harmonic Correction Term to
+    %       the Orbit Radius.
+    %   The equation Radius Correction:
+    %       delta_r_k = C_rs sin( 2 phi_k ) + C_rc Cos ( 2 phi_k )
+    %
+    %   Note: C_rc and C_rs sensitivity of position is about one meter/meter
+    %
+    %  C_rc has a scale Factor of 2^-5. There for:
+    %       5 meter = 5/(2^-5) = 160 meter
+    %       160 Dec = 0000000010100000 Binary
+    %
+    %       321.656 meter = 321.656/(2^-5) = 1.0293e4 meter
+    %       5613 Dec = 0010100000110100 Binray
+    C_rc = [ 0 0 1 0 1 0 0 0 0 0 1 1 0 1 0 0 ]; % 175.406 meter
+    % C_rc = [ 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0]; % 1 meter
+  % Define omega
+  % omega is the Argument of Perigee which is the moment in the satellite's orbit
+  %   that it is closest to earth.
+  % omega has 32 bits, where 8-bt MSB is in word 7 subframe 3
+  % omega has a Scale Factor of 2^-31 and units of semi-circles
+  % -2.56865 rad  = -0.8176 semi-circles = -0.8176/2^-31 = -1.7558e9
+  % 1.7558e9 = 01101000101001110110000111000000
+  % -1.7558e9 = 10010111 msb 010110001001111001000000 lsb
+  omega = [ 1 0 0 1 0 1 1 1 ];
+    % Define omega
+    % omega is the Argument of Perigee which is the moment in the satellite's orbit
+    %   that it is closest to earth.
+    % omega has 32 bits, where 8-bt MSB is in word 7 subframe 3
+    % omega has a Scale Factor of 2^-31 and units of semi-circles
+    % -2.56865 rad  = -0.8176 semi-circles = -0.8176/2^-31 = -1.7558e9
+    % 1.7558e9 = 01101000101001110110000111000000
+    % -1.7558e9 = 10010111 msb 010110001001111001000000 lsb
+    omega_msb = [ 1 0 0 1 0 1 1 1 ];
+
+
+
     % Pack'em all into a 24-bit number
-    word_7_no_parity = ;
+    word_7_no_parity = [ C_rc omega_msb ];
 
     word_7 = [ word_7_no_parity ...
         GpsParityMaker( 0, word_7_no_parity, D_star ) ];
@@ -204,39 +240,24 @@ end
 
 function word_8 = GenerateWord8( D_star )
 % ------------------------------------------------------------------------%
-% GenerateWord8() - Generates a 30 bit word containg ,C_US (16 bits),
-% sqrt_a (MSB, 8-bits)  and Parity bits.
+% GenerateWord8() - Generates a 30 bit word containg ,omega (24 bits LSB)
+%  and Parity bits.
 %
 %   Inputs:     D_star - Bits 29 and 30 of word 7
 % ------------------------------------------------------------------------%
 
-    % Define C_US
-    % C_US is the Amplitude of the Sine Hamronic Correction Term to the
-    %   Argument of Latitude
-    % C_US is in radians, has 16-bits and a Scale Factor of 2^-29
-    %       C_UC =  1.06301E-05 =  1.06301E-05/2^-29 = 5.7070e+03
-    %       0001011001001010b
-    C_US = [ 0 0 0 1 0 1 1 0 0 1 0 0 1 0 1 0 ];
-
-    % Define sqrt_a
-    % sqrt_a is the Square Root of the Semi-Major Axis
-    % sqrt_a has 32 bits (8-bit MSB in word 9 Subframe 2)
-    % sqrt_a is the squar root of a meter and has a Scale Factor of 2^-19
-    % sqrt_a has a range of 2530 to 8192
-    %   5153.79 = 5153.79/2^-19 = 2.7021e+09 = 10100001 msb 000011100101000111101011 lsb
-    sqrt_a_dec = 5153.79;
-
-    % Check range
-    % Note from the author: "Again, checking range twice. I don't like it!" -kp
-    if sqrt_a_dec < 2530 || sqrt_a_dec > 8192
-        error('Squre Root of the Semi-Major Axis is out-of-range. Check Word 8 of Subframe 2.');
-    else
-        sqrt_a = str2bin_array( dec2bin( sqrt_a_dec/2^-19, 32 ) );
-        sqrt_a = sqrt_a( 1:8 );
-    end
+  % Define omega
+  % omega is the Argument of Perigee which is the moment in the satellite's orbit
+  %   that it is closest to earth.
+  % omega has 32 bits, where 8-bt MSB is in word 7 subframe 3
+  % omega has a Scale Factor of 2^-31 and units of semi-circles
+  % -2.56865 rad  = -0.8176 semi-circles = -0.8176/2^-31 = -1.7558e9
+  % 1.7558e9 = 01101000101001110110000111000000
+  % -1.7558e9 = 10010111 msb 010110001001111001000000 lsb
+  omega_lsb = [ 0 1 0 1 1 0 0 0 1 0 0 1 1 1 1 0 0 1 0 0 0 0 0 0 ];
 
     % Pack'em all into a 24-bit number
-    word_8_no_parity = [ C_US sqrt_a ];
+    word_8_no_parity = omega_lsb;
 
     word_8 = [ word_8_no_parity ...
         GpsParityMaker( 0, word_8_no_parity, D_star ) ];
@@ -244,30 +265,31 @@ end
 
 function word_9 = GenerateWord9( D_star )
 % ------------------------------------------------------------------------%
-% GenerateWord8() - Generates a 30 bit word containg , SV clock correction
-%   term A_f2 and A_f1 and Parity bits.
+% GenerateWord9() - Generates a 30 bit word containg , omega_dot ( 24-bits)
+%  and Parity bits.
 %
 %   Inputs:     D_star - Bits 29 and 30 of word 8
 % ------------------------------------------------------------------------%
-    % Define sqrt_a
-    % sqrt_a is the Square Root of the Semi-Major Axis
-    % sqrt_a has 32 bits (8-bit MSB in word 9 Subframe 2)
-    % sqrt_a is the squar root of a meter and has a Scale Factor of 2^-19
-    % sqrt_a has a range of 2530 to 8192
-    %   5153.79 = 5153.79/2^-19 = 2.7021e+09 = 10100001 msb 000011100101000111101011 lsb
-    sqrt_a_dec = 5153.79;
+    % Define omega_dot
+    % omega_dot is the Rate of Right Ascension
+    % omega_dot has 24 bits
+    % omega_dot is semi-circles/sec and has a Scale Factor of 2^-43
+    % omega_dot has a range of -6.33E-07 to 0
+    %  -8.43857E-09 rad/sec = -2.6861e-9 = -2.6861e-9/2^-43 = -2.3627e4
+    % 2.3627e4 =  000000000101110001001011
+    % -2.3627e4 = 111111111010001110110101
+
+    omega_dot_dec = -2.6861e-9;
 
     % Check range
-    % Note from the author: "Again, checking range twice. I don't like it!" -kp
-    if sqrt_a_dec < 2530 || sqrt_a_dec > 8192
-        error('Squre Root of the Semi-Major Axis is out-of-range. Check Word 9 of Subframe 2.');
+    if omega_dot_dec < -6.33E-07  || omega_dot_dec > 0
+        error('The Rate of Right Ascension is out-of-range. Check Word 9 of Subframe 3.');
     else
-        sqrt_a = str2bin_array( dec2bin( sqrt_a_dec/2^-19, 32 ) );
-        sqrt_a = sqrt_a( 9:end );
+        omega_dot = str2bin_array( dec2bin( omega_dot_dec/2^-43, 24 ) );
     end
 
     % Pack'em all into a 24-bit number
-    word_9_no_parity = [ sqrt_a ];
+    word_9_no_parity =  omega_dot ;
 
     word_9 = [ word_9_no_parity ...
         GpsParityMaker( 0, word_9_no_parity, D_star ) ];
@@ -275,56 +297,38 @@ end
 
 function word_10 = GenerateWord10( D_star )
 % ------------------------------------------------------------------------%
-% GenerateWord8() - Generates a 30 bit word containg , t_oe (16-bits,),
-% Fit Interval Flag (1-bit),AODO(5-bits) and Parity bits.
+% GenerateWord10() - Generates a 30 bit word containg IODE (8-bits),
+%  IDOT (14-bit)  and Parity bits.
 %
 %   Inputs:     D_star - Bits 29 and 30 of word 9
 % ------------------------------------------------------------------------%
 
-    % Define t_oe
-    % t_oe is Reference Time Ephemeris ( for more info go to paragraph 20.3.4.5 )
-    % t_oe has 16 bits and a Scale Factor of 2^4.
-    % t_oe is counted in units of seconds.
-    % t_oe has a range of 0 to 604,784 seconds.
-    %   252000 = 25200/2^4 = 1575 = 0000011000100111
-    t_oe_dec = 252000;
+  % Define IODE ( Issue of Data (Ephemeris) )
+  %   This provides the user with a convenient means for detecting
+  %   any change in the ephemirs represenation parameters.
+  % Note: IODE is provided in both Subframe 2 and 3 for the purpose of
+  %       comparison.
+  % IMPORTANT: IODE is compared to the 8 LSB of the IODC in subframe 1.
+  %       If the three terms ( IODE subframe 2 and 3, and IODC subframe
+  %       1 ) do NOT match, a set curover has occurred and new data
+  %       must be collected.
+  %       Timing and constrained defined in Paragraph 20.3.4.4
+  %   For Simulation IDOC = 157 = 0010011101b
+  % IDOE is the LSB 8-bits of IODC
+  IDOE = [ 1 0 0 1 1 1 0 1 ];
 
-    if t_oe_dec < 0 || t_oe_dec > 604784
-        error('Reference Time Ephemeris is out-of-range. Check Word 10 of Subframe 2.');
-    else
-        t_oe = str2bin_array( dec2bin( t_oe_dec/2^4, 16 ) )
-    end
-
-    % Define Fit Interval Flag
-    % A "fit interval" flag indicates whether the ephemerides are based on a
-    %   4-hour fit interval or a Greater than 4-hours.
-    % Paragraph 6.2.3 defines the following operational intervals:
-    %       Normal - SV normal ops: fit flag = 0 ( ref. 20.3.3.4.3.1)
-    %       Short-term Extended: fit flag = 1 & IODE < 240 ( ref. 20.3.4.4 )
-    %       Long-term Extended: fit flag = 1 & IODE between 240-255
-    fit_interval_flag = 0 % 4-hours fit interval
-    %fit_interval_flag = 1; % >4-hours fit interval
-
-    % Define AODO
-    % aodo is the Age of Data Offset. Is a term used for teh Navigation Message
-    %   Correction table ( NMCT ) contained in subframe 4 ( ref 20.3.3.5.1.9 )
-    % aodo enables the user to determine the validity time for the NMCT Data
-    %   provided in subframe 4 of the transmitting SV. Algorithm given in 20.3.3.4.4
-    % aodo is 5-bits unsigned term w/ an LSB Scale Factor of 900
-    % aodo has a range between 0 and 31.
-    % aodo has units of seconds.
-    % In paragraph 20.3.3.4.4 NMCT Validity time states :
-    %   If AODO term is 27900 ( 11111 binary ) then NMCT data is invalid.
-    %   if AODO term is less than 27900 then user shall compute the validity
-    %       time for NMCT ( t_nmct ) using the t_oe and aodo term.
-    %
-    %   OFFSET = t_oe [ modulo 7200 ]
-    %   if OFFEST == 0 then t_nmct = t_oe - aodo
-    %   if OFFSET > 0  then t_nmct = t_oe - OFFSET + 7200 - AODO
-    aodo = [ 0 0 0 0 0 ]
+  % Define IDOT
+  % IDOT is the Rate of Inclination Angle
+  % IDOT has 14-bits and a Scale Factor of 2^-43. Units of semi-circles/sec
+  % The Corrected Inclination equation:
+  %   i_k = i_not + delta_i_k + IDOT*t_k
+  %       Found on Table 20-IV
+  % IDOT = 4.11089E-10 rad/sec = 1.3085e-10 semi-circles/sec
+  % =  1.3085e-10/2^-43 = 1.1510e3 = 00010001111111 b
+  IDOT = [ 0 0 0 1 0 0 0 1 1 1 1 1 1 1 ];
 
     % Pack'em all into a 22-bit number THIS HAS FORCE PARITY!
-    word_10_no_parity = [ t_oe fit_interval_flag aodo ];
+    word_10_no_parity = [ IDOE IDOT ];
 
     word_10 = [ word_10_no_parity ...
         GpsParityMaker( 1, word_10_no_parity, D_star ) ];
