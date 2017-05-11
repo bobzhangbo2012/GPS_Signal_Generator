@@ -353,7 +353,7 @@ function word_10 = GenerateWord10( D_star )
     if t_oe_dec < 0 || t_oe_dec > 604784
         error('Reference Time Ephemeris is out-of-range. Check Word 10 of Subframe 2.');
     else
-        t_oe = str2bin_array( dec2bin( t_oe_dec/2^4, 16 ) )
+        t_oe = str2bin_array( dec2bin( t_oe_dec/2^4, 16 ) );
     end
 
     % Define Fit Interval Flag
@@ -363,7 +363,7 @@ function word_10 = GenerateWord10( D_star )
     %       Normal - SV normal ops: fit flag = 0 ( ref. 20.3.3.4.3.1)
     %       Short-term Extended: fit flag = 1 & IODE < 240 ( ref. 20.3.4.4 )
     %       Long-term Extended: fit flag = 1 & IODE between 240-255
-    fit_interval_flag = 0 % 4-hours fit interval
+    fit_interval_flag = 0; % 4-hours fit interval
     %fit_interval_flag = 1; % >4-hours fit interval
 
     % Define AODO
@@ -382,7 +382,7 @@ function word_10 = GenerateWord10( D_star )
     %   OFFSET = t_oe [ modulo 7200 ]
     %   if OFFEST == 0 then t_nmct = t_oe - aodo
     %   if OFFSET > 0  then t_nmct = t_oe - OFFSET + 7200 - AODO
-    aodo = [ 0 0 0 0 0 ]
+    aodo = [ 0 0 0 0 0 ];
 
     % Pack'em all into a 22-bit number THIS HAS FORCE PARITY!
     word_10_no_parity = [ t_oe fit_interval_flag aodo ];

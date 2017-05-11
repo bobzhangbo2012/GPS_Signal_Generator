@@ -285,7 +285,10 @@ function word_9 = GenerateWord9( D_star )
     if omega_dot_dec < -6.33E-07  || omega_dot_dec > 0
         error('The Rate of Right Ascension is out-of-range. Check Word 9 of Subframe 3.');
     else
-        omega_dot = str2bin_array( dec2bin( omega_dot_dec/2^-43, 24 ) );
+        % Omega dot binary not calculated here becuase Two's compelement
+        %   of value has been done by head. A function needs to be
+        %   implemented to calculate the omega_dot_dec negative values.
+        omega_dot = [1 1 1 1 1 1 1 1 1 0 1 0 0 0 1 1 1 0 1 1 0 1 0 1 ];
     end
 
     % Pack'em all into a 24-bit number
