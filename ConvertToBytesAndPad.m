@@ -14,7 +14,7 @@ function [ byte_array ] = ConvertToBytesAndPad( input_array )
 %               Created by Kurt Pedrosa  -- May 5th 2017                  %
 % ----------------------------------------------------------------------- %
     [ number_of_rows , number_of_columns ] = ...
-        size(input_array)
+        size(input_array);
 
     % Create a temp array to hold values
     % This is a 4 by 10 array because each column will hold 32 bits divided by

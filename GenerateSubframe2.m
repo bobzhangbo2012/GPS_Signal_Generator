@@ -1,5 +1,5 @@
 function [ subframe_2_300_bits ] = GenerateSubframe2( ...
-    GPS_week_number, TOW_truncated, D_star  )
+    TOW_truncated, D_star  )
     % ----------------------------------------------------------------------- %
     %  GenerateSubframe2 - Generates the second subframe of a GPS Message. It %
     %   contains 300 bits, 10 words each 30 bits. The following define each   %
@@ -71,7 +71,7 @@ function [ subframe_2_300_bits ] = GenerateSubframe2( ...
                             word_7 ;
                             word_8 ;
                             word_9 ;
-                            word_10];
+                            word_10]
 end
 
 

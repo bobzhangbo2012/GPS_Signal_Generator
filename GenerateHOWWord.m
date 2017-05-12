@@ -1,9 +1,9 @@
-function [ HOW_word ] = GenerateHOWWord( TOW_bin_truncated, frame_ID, D_star )
+function [ HOW_word ] = GenerateHOWWord( TOW_bin, frame_ID, D_star )
 % ----------------------------------------------------------------------- %
 %     GenerateTLMWOrd - Generates all 30 bits of the HOW word. The HOW    %
 %  or Handover Word is ALWAYS the second word on a subframe. It follows   %
-%  the TLM word. It begins with the 19-bits of the TOW (time-of-week)     %
-%  count. NOTE that the full TOW is 19-bits which are the LSB of the      %
+%  the TLM word. It begins with the 17-bits of the TOW (time-of-week)     %
+%  count. NOTE that the full TOW is 17-bits which are the LSB of the      %
 %  29-bit z-count. After the TOW count is an ALERT flag, when this flag   %
 %  is set to '1' is indicates that the User Range Accurcy (URE) is worse  %
 %  than indicated and that the receiver shall use the SV at own risk.     %
@@ -31,7 +31,7 @@ end
 
 % Check for TOW is done outside this function
 % Pack'em all into a 22-bit number
-HOW_word = [ TOW_bin_truncated, Alert_flag, Anti_spoof_flag, frame_ID ];
+HOW_word = [ TOW_bin, Alert_flag, Anti_spoof_flag, frame_ID ];
 
 % Bits 23 and 24 have to be calculated so that bits 29 and 30 are '0'
 % A parity calculation have to be calculated in order that bits 

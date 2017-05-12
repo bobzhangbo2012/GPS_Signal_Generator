@@ -1,5 +1,5 @@
 function [ subframe_3_300_bits ] = GenerateSubframe3( ...
-    GPS_week_number, TOW_truncated, D_star  )
+    TOW_truncated, D_star  )
     % ----------------------------------------------------------------------- %
     %  GenerateSubframe3 - Generates the second subframe of a GPS Message. It %
     %   contains 300 bits, 10 words each 30 bits. The following define each   %
@@ -14,7 +14,7 @@ function [ subframe_3_300_bits ] = GenerateSubframe3( ...
     %       Word 7 - C_rc (16-bits), omega (8-bits MSB)                       %
     %       Word 8 - omega (24 bits LSB)                                      %
     %       Word 9 - omega_dot ( 24-bits)                                     %
-    %       Word 10 - IODE (8-bits,), IDOT (14-bit)          %
+    %       Word 10 - IODE (8-bits,), IDOT (14-bit)                           %
     %                                                                         %
     %       INPUT:                                                            %
     %         - GPS_week_number - A 10-bit MSB of the 29-bit z-count          %

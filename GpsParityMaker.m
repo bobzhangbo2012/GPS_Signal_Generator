@@ -5,7 +5,7 @@ function [ parity_bits ] = GpsParityMaker( forced_parity, message, D_Star_2_bits
 %   The D* ( 2 bits ) are the two bits from the preceding message         %
 %   required to calculate the parity bits. The algorithim used is         %
 %   detailed in the Navstart IS-GPS-200D table 20-XIV.
-% 
+%
 %   IMPORTANT:  D_Star_2_bits must be [ D_29_start , D_30_start ].        %
 %       Meaning, the 29th bit of the preceeding message has to be first   %
 % ----------------------------------------------------------------------- %
@@ -22,12 +22,12 @@ function [ parity_bits ] = GpsParityMaker( forced_parity, message, D_Star_2_bits
         message_24_bits = message;
         parity_bits = ...
             CalculateParityBits( D_29_star, D_30_star, message_24_bits );
-    
+
     elseif forced_parity == 1
 
         % A forced parity maker. Bits 23 and 24 must be selected so that
         %   bits 29 and 20 of message are both zero.
-        %   NOTE: Bit 23 and 24 are refeered to as 't' in the documentation
+        %   NOTE: Bit 23 and 24 are referred to as 't' in the documentation
         %   FYI: Bit 't' are present in HOW and Word 10 of each subframe
         if length( message ) == 22
             % Possible 't' choiced
@@ -61,7 +61,7 @@ function [ parity_bits ] = GpsParityMaker( forced_parity, message, D_Star_2_bits
 %     D_28 = ModularTwoAddition( D_30_star, message_24_bits, 28 );
 %     D_29 = ModularTwoAddition( D_30_star, message_24_bits, 29 );
 %     D_30 = ModularTwoAddition( D_29_star, message_24_bits, 30 );
-% 
+%
 %     parity_bits = [ D_25 D_26 D_27 D_28 D_29 D_30 ];
 end
 
@@ -75,7 +75,7 @@ function calculated_parity_bits = ...
     D_28 = ModularTwoAddition( D_30_star, message_24_bits, 28 );
     D_29 = ModularTwoAddition( D_30_star, message_24_bits, 29 );
     D_30 = ModularTwoAddition( D_29_star, message_24_bits, 30 );
-    
+
     calculated_parity_bits = [ D_25 D_26 D_27 D_28 D_29 D_30 ];
 end
 
@@ -85,24 +85,24 @@ function D_result = ModularTwoAddition( D_star, message, parity_bit )
 %   with the message ( a 24-bit number ) to calculate a single parity bit.%
 %   The parity_bit is a identifier used by this function to calculate     %
 %   the correct D_result.                                                 %
-%                                                                         %  
+%                                                                         %
 %   IMPORTANT:  The message_bits_for_calculation is defined by the GPS    %
 %               document IS-GPS-200 Table 20-XIV. Any changes to this     %
 %               needs to be reflected on this variable.                   %
 % ----------------------------------------------------------------------- %
 %               Created by Kurt Pedrosa  -- Feb 20th 2017                 %
 % ----------------------------------------------------------------------- %
- 
+
  % Set D_start to D_result so it can be used later for caluclation
  D_result = D_star;
- 
+
  % Message must be a 24-bit number
  if ( length( message ) == 24 )
-     % Define the message bits used for calculation depending on 
+     % Define the message bits used for calculation depending on
      % the parity bit being calculated
      switch parity_bit
          case 25
-             
+
              message_bits_for_calculation = ...
                  [ 1 2 3 5 6 10 11 12 13 14 17 18 20 23 ];
          case 26
@@ -123,7 +123,7 @@ function D_result = ModularTwoAddition( D_star, message, parity_bit )
          otherwise
              error( ' Parity bit not defined ');
      end
-     
+
      % Calculate the parity bit
      for count_i = 1:1:length( message_bits_for_calculation )
          D_result = xor( D_result, ...
@@ -133,4 +133,3 @@ function D_result = ModularTwoAddition( D_star, message, parity_bit )
      error( ' Message is not 24-bits ' );
  end
 end
-
