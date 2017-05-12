@@ -1,23 +1,24 @@
-function [ subframe_3_300_bits ] = GenerateSubframe3( ...
-    TOW_truncated, D_star  )
+function [ subframe_5_300_bits ] = GenerateSubframe5( ...
+    page_number, TOW_truncated, D_star  )
     % ----------------------------------------------------------------------- %
-    %  GenerateSubframe3 - Generates the second subframe of a GPS Message. It %
+    %  GenerateSubframe5 - Generates the second subframe of a GPS Message. It %
     %   contains 300 bits, 10 words each 30 bits. The following define each   %
     %   bit content:                                                          %
     %                                                                         %
     %       Word 1 - TLM                                                      %
     %       Word 2 - HOW                                                      %
-    %       Word 3 - C_ic (16-bits), omega_not ( 8-bits MSB )                 %
-    %       Word 4 - omega_not (24-bits LSB)                                  %
-    %       Word 5 - C_is ( 26-bits), i_not ( 8 bits MSB )                    %
-    %       Word 6 - i_not (24-bits LSB )                                     %
-    %       Word 7 - C_rc (16-bits), omega (8-bits MSB)                       %
+    %       Word 3 - Data ID (2-bits), SV Id (6-bit), e (16-bits)             %
+    %       Word 4 - t_oa (8-bits), delta_i (16-bits)                         %
+    %       Word 5 - omega_dot (16-bits), sv_health (8-bits)                  %
+    %       Word 6 - sqrt_a (24-bits)                                         %
+    %       Word 7 - omega_not (24-bits)                                      %
     %       Word 8 - omega (24 bits LSB)                                      %
-    %       Word 9 - omega_dot ( 24-bits)                                     %
-    %       Word 10 - IODE (8-bits,), IDOT (14-bit)                           %
+    %       Word 9 - M_not ( 24-bits)                                         %
+    %       Word 10 - a_f_not (8-bits MSB ), a_f_1 ( 11-bts ),                %
+    %                 a_f_not (2-bit LSB)                                     %
     %                                                                         %
     %       INPUT:                                                            %
-    %         - GPS_week_number - A 10-bit MSB of the 29-bit z-count          %
+    %         - page_nuber - Subframe 4 and 5 have page numbers               %
     %         - TOW_truncated - 17 MSB of 19 bit time of week                 %
     %         - D_star -  Last two bits of previews word                      %
     %                                                                         %
@@ -33,7 +34,7 @@ function [ subframe_3_300_bits ] = GenerateSubframe3( ...
     % ----------------------------------------------------------------------- %
 
     % Define Frame
-    frame_id = [ 0 1 1 ];
+    frame_id = [ 1 0 1 ];
 
     % Define all  300 bits, 10 words.
     word_1  = GenerateTLMWord( D_star );

@@ -41,11 +41,6 @@ function [ subframe_2_300_bits ] = GenerateSubframe2( ...
     % Define Frame
     frame_id = [ 0 1 0 ];
 
-    % Check TOW truncated
-    if length(TOW_truncated) ~= 17
-        error(' Invalid Time Of Week - Subframe 1 ');
-    end
-
     % Define all  300 bits, 10 words.
     word_1  = GenerateTLMWord( D_star );
     word_2  = GenerateHOWWord( TOW_truncated, frame_id, word_1( 29:30 ));
