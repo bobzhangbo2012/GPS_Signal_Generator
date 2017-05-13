@@ -66,7 +66,7 @@ function [ subframe_2_300_bits ] = GenerateSubframe2( ...
                             word_7 ;
                             word_8 ;
                             word_9 ;
-                            word_10]
+                            word_10];
 end
 
 
