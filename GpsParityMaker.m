@@ -1,4 +1,4 @@
-function [ parity_bits ] = GpsParityMaker( forced_parity, message, D_Star_2_bits )
+function [ encoded_message ] = GpsParityMaker( forced_parity, message, D_Star_2_bits )
 % ----------------------------------------------------------------------- %
 %     GpsParityMaker - Generates a 6-bit parity number given the 24-bit   %
 %   message. This parity number is generated for each word in a subframe. %
@@ -17,55 +17,46 @@ function [ parity_bits ] = GpsParityMaker( forced_parity, message, D_Star_2_bits
     D_30_star = D_Star_2_bits(2);
 
     if forced_parity == 0
-
     % Not a forced parity maker
-        message_24_bits = message;
+        encoded_message_MSB = xor( message, D_30_star );
         parity_bits = ...
-            CalculateParityBits( D_29_star, D_30_star, message_24_bits );
+            CalculateParityBits( D_29_star, D_30_star, message );
+
+        encoded_message = [ encoded_message_MSB parity_bits ];
 
     elseif forced_parity == 1
-
         % A forced parity maker. Bits 23 and 24 must be selected so that
         %   bits 29 and 20 of message are both zero.
         %   NOTE: Bit 23 and 24 are referred to as 't' in the documentation
         %   FYI: Bit 't' are present in HOW and Word 10 of each subframe
         if length( message ) == 22
+
             % Possible 't' choiced
             t_choices = [ 0 0; 0 1; 1 0; 1 1];
-
             % Iterate through each 't' possibility
             for count_i = 1:length(t_choices)
+
                 message_24_bits = [ message t_choices( count_i, :) ];
                 parity_bit_temp = ...
                     CalculateParityBits( D_29_star, D_30_star, message_24_bits );
+
                 if (parity_bit_temp(5) == 0 && parity_bit_temp(6) == 0)
-                    parity_bits = [ t_choices( count_i, :) parity_bit_temp ];
+
+                    encoded_message_MSB = xor( message, D_30_star );
+                    encoded_message = [ encoded_message_MSB t_choices( count_i, : ) parity_bit_temp ];
+
                 end
             end
         else
             error('Forced Parity on given message error. Message not 22-bits long');
         end
-
     else
-
         % Not a valid input.
         error('Incorrect force parity request. Check parity maker');
-
     end
-
-
-%     % Compute all 6 parity bits.
-%     D_25 = ModularTwoAddition( D_29_star, message_24_bits, 25 );
-%     D_26 = ModularTwoAddition( D_30_star, message_24_bits, 26 );
-%     D_27 = ModularTwoAddition( D_29_star, message_24_bits, 27 );
-%     D_28 = ModularTwoAddition( D_30_star, message_24_bits, 28 );
-%     D_29 = ModularTwoAddition( D_30_star, message_24_bits, 29 );
-%     D_30 = ModularTwoAddition( D_29_star, message_24_bits, 30 );
-%
-%     parity_bits = [ D_25 D_26 D_27 D_28 D_29 D_30 ];
 end
 
-function calculated_parity_bits = ...
+function parity_bits = ...
     CalculateParityBits( D_29_star, D_30_star, message_24_bits )
 
     % Compute all 6 parity bits.
@@ -76,7 +67,7 @@ function calculated_parity_bits = ...
     D_29 = ModularTwoAddition( D_30_star, message_24_bits, 29 );
     D_30 = ModularTwoAddition( D_29_star, message_24_bits, 30 );
 
-    calculated_parity_bits = [ D_25 D_26 D_27 D_28 D_29 D_30 ];
+    parity_bits = [  D_25 D_26 D_27 D_28 D_29 D_30 ];
 end
 
 function D_result = ModularTwoAddition( D_star, message, parity_bit )
@@ -94,15 +85,14 @@ function D_result = ModularTwoAddition( D_star, message, parity_bit )
 % ----------------------------------------------------------------------- %
 
  % Set D_start to D_result so it can be used later for caluclation
- D_result = D_star;
-
+ D_result = D_star
+ message
  % Message must be a 24-bit number
  if ( length( message ) == 24 )
      % Define the message bits used for calculation depending on
      % the parity bit being calculated
      switch parity_bit
          case 25
-
              message_bits_for_calculation = ...
                  [ 1 2 3 5 6 10 11 12 13 14 17 18 20 23 ];
          case 26
@@ -121,15 +111,14 @@ function D_result = ModularTwoAddition( D_star, message, parity_bit )
              message_bits_for_calculation = ...
                  [ 3 5 6 8 9 10 11 13 15 19 22 23 24 ];
          otherwise
-             error( ' Parity bit not defined ');
+             error( 'Parity bit not defined');
      end
 
      % Calculate the parity bit
-     for count_i = 1:1:length( message_bits_for_calculation )
-         D_result = xor( D_result, ...
-             message( message_bits_for_calculation( count_i ) ));
+     for count_i = 1:length( message_bits_for_calculation )
+         D_result = xor( D_result, message( message_bits_for_calculation( count_i ) ));
      end
  else
-     error( ' Message is not 24-bits ' );
+     error( 'Message is not 24-bits' );
  end
 end

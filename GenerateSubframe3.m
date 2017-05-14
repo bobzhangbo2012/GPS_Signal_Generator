@@ -94,7 +94,7 @@ function word_3 = GenerateWord3( D_star )
     % Pack'em all into a 24-bit number
     word_3_no_parity = [ C_ic omega_not_msb ];
 
-    word_3 = [ word_3_no_parity GpsParityMaker( 0, word_3_no_parity, D_star ) ];
+    word_3 = GpsParityMaker( 0, word_3_no_parity, D_star );
 end
 
 function word_4 = GenerateWord4( D_star )
@@ -116,8 +116,7 @@ function word_4 = GenerateWord4( D_star )
     % Pack'em all into a 24-bit number
     word_4_no_parity = omega_not_lsb ;
 
-    word_4 = [ word_4_no_parity ...
-        GpsParityMaker( 0, word_4_no_parity, D_star ) ];
+    word_4 = GpsParityMaker( 0, word_4_no_parity, D_star );
 end
 
 function word_5 = GenerateWord5( D_star )
@@ -152,8 +151,7 @@ function word_5 = GenerateWord5( D_star )
     % Pack'em all into a 24-bit number
     word_5_no_parity = [ C_is i_not_msb ];
 
-    word_5 = [ word_5_no_parity ...
-        GpsParityMaker( 0, word_5_no_parity, D_star ) ];
+    word_5 = GpsParityMaker( 0, word_5_no_parity, D_star );
 end
 
 function word_6 = GenerateWord6( D_star )
@@ -177,8 +175,7 @@ function word_6 = GenerateWord6( D_star )
     % Pack'em all into a 24-bit number
     word_6_no_parity = i_not_lsb;
 
-    word_6 = [ word_6_no_parity ...
-        GpsParityMaker(0,  word_6_no_parity, D_star ) ];
+    word_6 = GpsParityMaker(0,  word_6_no_parity, D_star );
 end
 
 function word_7 = GenerateWord7( D_star )
@@ -229,8 +226,7 @@ function word_7 = GenerateWord7( D_star )
     % Pack'em all into a 24-bit number
     word_7_no_parity = [ C_rc omega_msb ];
 
-    word_7 = [ word_7_no_parity ...
-        GpsParityMaker( 0, word_7_no_parity, D_star ) ];
+    word_7 = GpsParityMaker( 0, word_7_no_parity, D_star );
 end
 
 function word_8 = GenerateWord8( D_star )
@@ -254,8 +250,7 @@ function word_8 = GenerateWord8( D_star )
     % Pack'em all into a 24-bit number
     word_8_no_parity = omega_lsb;
 
-    word_8 = [ word_8_no_parity ...
-        GpsParityMaker( 0, word_8_no_parity, D_star ) ];
+    word_8 = GpsParityMaker( 0, word_8_no_parity, D_star );
 end
 
 function word_9 = GenerateWord9( D_star )
@@ -289,8 +284,7 @@ function word_9 = GenerateWord9( D_star )
     % Pack'em all into a 24-bit number
     word_9_no_parity =  omega_dot ;
 
-    word_9 = [ word_9_no_parity ...
-        GpsParityMaker( 0, word_9_no_parity, D_star ) ];
+    word_9 = GpsParityMaker( 0, word_9_no_parity, D_star );
 end
 
 function word_10 = GenerateWord10( D_star )
@@ -328,6 +322,5 @@ function word_10 = GenerateWord10( D_star )
     % Pack'em all into a 22-bit number THIS HAS FORCE PARITY!
     word_10_no_parity = [ IDOE IDOT ];
 
-    word_10 = [ word_10_no_parity ...
-        GpsParityMaker( 1, word_10_no_parity, D_star ) ];
+    word_10 = GpsParityMaker( 1, word_10_no_parity, D_star );
 end

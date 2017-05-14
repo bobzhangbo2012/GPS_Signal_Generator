@@ -123,7 +123,7 @@ function word_3 = GenerateWord3( GPS_week_number, D_star )
     word_3_no_parity = ...
         [ GPS_week_number Code_L2_Flag URA_index sv_health, IODC ];
 
-    word_3 = [ word_3_no_parity GpsParityMaker( 0, word_3_no_parity, D_star ) ];
+    word_3 = GpsParityMaker( 0, word_3_no_parity, D_star ) ;
 end
 
 function word_4 = GenerateWord4( D_star )
@@ -151,8 +151,7 @@ function word_4 = GenerateWord4( D_star )
     word_4_no_parity = ...
         [ L2_P_code_flag reserved_bits ];
 
-    word_4 = [ word_4_no_parity ...
-        GpsParityMaker( 0, word_4_no_parity, D_star ) ];
+    word_4 = GpsParityMaker( 0, word_4_no_parity, D_star );
 end
 
 function word_5 = GenerateWord5( D_star )
@@ -174,8 +173,7 @@ function word_5 = GenerateWord5( D_star )
 
     word_5_no_parity = reserved_bits ;
 
-    word_5 = [ word_5_no_parity ...
-        GpsParityMaker( 0, word_5_no_parity, D_star ) ];
+    word_5 = GpsParityMaker( 0, word_5_no_parity, D_star );
 end
 
 function word_6 = GenerateWord6( D_star )
@@ -197,8 +195,7 @@ function word_6 = GenerateWord6( D_star )
 
     word_6_no_parity = reserved_bits ;
 
-    word_6 = [ word_6_no_parity ...
-        GpsParityMaker(0,  word_6_no_parity, D_star ) ];
+    word_6 = GpsParityMaker(0,  word_6_no_parity, D_star );
 end
 
 function word_7 = GenerateWord7( D_star )
@@ -230,8 +227,7 @@ function word_7 = GenerateWord7( D_star )
 
     word_7_no_parity = [reserved_bits message_correction_t_gd ];
 
-    word_7 = [ word_7_no_parity ...
-        GpsParityMaker( 0, word_7_no_parity, D_star ) ];
+    word_7 = GpsParityMaker( 0, word_7_no_parity, D_star );
 end
 
 function word_8 = GenerateWord8( D_star )
@@ -274,8 +270,7 @@ IODC_LSB_8_bits = [ 1 0 0 1 1 1 0 1 ];
 
     word_8_no_parity = [IODC_LSB_8_bits clock_correction_t_oc ];
 
-    word_8 = [ word_8_no_parity ...
-        GpsParityMaker( 0, word_8_no_parity, D_star ) ];
+    word_8 = GpsParityMaker( 0, word_8_no_parity, D_star );
 end
 
 function word_9 = GenerateWord9( D_star )
@@ -302,8 +297,7 @@ function word_9 = GenerateWord9( D_star )
 
     word_9_no_parity = [clock_correction_a_f2 clock_correction_a_f1 ];
 
-    word_9 = [ word_9_no_parity ...
-        GpsParityMaker( 0, word_9_no_parity, D_star ) ];
+    word_9 = GpsParityMaker( 0, word_9_no_parity, D_star );
 end
 
 function word_10 = GenerateWord10( D_star )
@@ -330,6 +324,5 @@ function word_10 = GenerateWord10( D_star )
 
     word_10_no_parity = clock_correction_a_f0;
 
-    word_10 = [ word_10_no_parity ...
-        GpsParityMaker( 1, word_10_no_parity, D_star ) ];
+    word_10 = GpsParityMaker( 1, word_10_no_parity, D_star );
 end

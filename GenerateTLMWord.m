@@ -32,6 +32,6 @@ TLM_reserve = 1;
 TLM_word = [ TLM_preamble TLM_message integrity_status_flag TLM_reserve ];
 
 % Calculate parity bits ( 6-bits )
-TLM_word = [ TLM_word GpsParityMaker( 0, TLM_word, D_star )  ];
+TLM_word = GpsParityMaker( 0, TLM_word, D_star );
 
 end

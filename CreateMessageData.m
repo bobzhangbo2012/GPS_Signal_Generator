@@ -27,26 +27,26 @@ function message_data = CreateMessageData()
     %   This is the largest unit used in stating GPS time.
     %   1 week = 604,800 seconds
     gps_seconds_of_week = ...
-    floor((( gps_week - true_gps_week )*hours_in_day*minutes_in_hour*seconds_in_hour*days_in_week));
+    floor((( gps_week - true_gps_week )*hours_in_day*minutes_in_hour*seconds_in_hour*days_in_week))
 
     % Define Week number for Subframe 1 Word 3
     % This is a 10-bit modulo 1024 representatino of the current GPS week number
     transmission_week_number = ...
-    str2bin_array( dec2bin( mod( true_gps_week, 1024 )));
+    str2bin_array( dec2bin( mod( true_gps_week, 1024 )))
 
     subframe_1_1 = GenerateSubframe1( transmission_week_number, str2bin_array( GetHOWTimeWeek( gps_seconds_of_week )), [ 0 0 ]);
     subframe_2_1 = GenerateSubframe2( str2bin_array( GetHOWTimeWeek( gps_seconds_of_week + 6 )),  subframe_1_1( 10, 29:30 ));
     subframe_3_1 = GenerateSubframe3( str2bin_array( GetHOWTimeWeek( gps_seconds_of_week + 12 )), subframe_2_1( 10, 29:30 ));
-    
+
     subframe_1_2 = GenerateSubframe1( transmission_week_number, str2bin_array( GetHOWTimeWeek( gps_seconds_of_week + 30)), [ 0 0 ]);
     subframe_2_2 = GenerateSubframe2( str2bin_array( GetHOWTimeWeek( gps_seconds_of_week + 36 )),  subframe_1_2( 10, 29:30 ));
     subframe_3_2 = GenerateSubframe3( str2bin_array( GetHOWTimeWeek( gps_seconds_of_week + 42 )), subframe_2_2( 10, 29:30 ));
-    
+
     subframe_1_3 = GenerateSubframe1( transmission_week_number, str2bin_array( GetHOWTimeWeek( gps_seconds_of_week + 54)), [ 0 0 ]);
     subframe_2_3 = GenerateSubframe2( str2bin_array( GetHOWTimeWeek( gps_seconds_of_week + 60 )),  subframe_1_3( 10, 29:30 ));
     subframe_3_3 = GenerateSubframe3( str2bin_array( GetHOWTimeWeek( gps_seconds_of_week + 66 )), subframe_2_3( 10, 29:30 ));
-    
-    
+
+
     message_data = [ subframe_1_1; subframe_2_1; subframe_3_1; subframe_1_2; subframe_2_2; subframe_3_2; subframe_1_3; subframe_2_3; subframe_3_3 ];
 
 end
