@@ -20,7 +20,7 @@ while ~roach_connected
     try
         % Define which firmware to upload
         fw = 'gps_full_signal_2017_May_12_2005.bof'; % .bof file
-        
+
         rhost = '192.168.4.117'; % IP Address for roach being used
 
         fprintf('Attempting to connect to %s and load %s\n', rhost, fw );
@@ -37,7 +37,7 @@ while ~roach_connected
         roach_connected = 1;
 
         % As per Dr. Barott
-        global_pause = 0.25; % Pause to enforce between writesSELECTOR_TWO_REG1
+        global_pause = 0.25; % Pause to enforce between writes
 
     catch
     end
@@ -46,17 +46,7 @@ end
 % Create Message Data
 message_signal = CreateMessageData();
 
-% % testing bram
-% test_message = zeros(10,30);
-% for count_j = 1:10
-%     for count_k = 1:2:30
-%         test_message( count_j, count_k ) = 1;
-%     end
-% end
-%test_message_bytes = ConvertToBytesAndPad(test_message);
-
-
-message_signal_bytes = ConvertToBytesAndPad( message_signal);
+message_signal_bytes = ConvertToBytesAndPad( message_signal );
 repeating_array = message_signal_bytes(:);
 
 % Largest number of bytes that the bram can hold is 262144
