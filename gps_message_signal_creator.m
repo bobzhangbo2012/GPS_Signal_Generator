@@ -19,7 +19,7 @@ roach_connected = 0;
 while ~roach_connected
     try
         % Define which firmware to upload
-        fw = 'gps_full_signal_2017_May_12_2005.bof'; % .bof file
+        fw = 'gps_full_signal_2017_May_17_1732.bof'; % .bof file
 
         rhost = '192.168.4.117'; % IP Address for roach being used
 
@@ -50,16 +50,27 @@ message_signal_bytes = ConvertToBytesAndPad( message_signal );
 repeating_array = message_signal_bytes(:);
 
 % Largest number of bytes that the bram can hold is 262144
-for count_i = 1:1:727
+for count_i = 1:1:39
     repeating_array = [ repeating_array; message_signal_bytes(:) ];
 end
 
 % Select the SV
-selected_bits = SelectSatellite(9);
-
+selected_bit_sv1 = SelectSatellite(2);
+selected_bit_sv2 = SelectSatellite(4);
+selected_bit_sv3 = SelectSatellite(6);
+selected_bit_sv4 = SelectSatellite(8);
 % Write to Selector Bit registers
-wordwrite( roach, 'G2_SV_Selector_SELECTOR_ONE_REG', selected_bits(1,1) );
-wordwrite( roach, 'G2_SV_Selector_SELECTOR_TWO_REG', selected_bits(1,2) );
+wordwrite( roach, 'G2_1_SV_SEL_SEL_REG1', selected_bit_sv1(1,1) );
+wordwrite( roach, 'G2_1_SV_SEL_SEL_REG2', selected_bit_sv1(1,2) );
+
+wordwrite( roach, 'G2_2_SV_SEL_SEL_REG1', selected_bit_sv2(1,1) );
+wordwrite( roach, 'G2_2_SV_SEL_SEL_REG2', selected_bit_sv2(1,2) );
+
+wordwrite( roach, 'G2_3_SV_SEL_SEL_REG1', selected_bit_sv3(1,1) );
+wordwrite( roach, 'G2_3_SV_SEL_SEL_REG2', selected_bit_sv3(1,2) );
+
+wordwrite( roach, 'G2_4_SV_SEL_SEL_REG1', selected_bit_sv4(1,1) );
+wordwrite( roach, 'G2_4_SV_SEL_SEL_REG2', selected_bit_sv4(1,2) );
 
 % Ensure PRN Signal is turned ON ( Set:  PRN_SHUTDOWN_SWITCH to 0)
 %   PRN_SHUTDOWN_SWITCH controls a MUX that selected between a constant
@@ -70,11 +81,11 @@ pause( global_pause ); wordwrite( roach, 'PRN_SHUTDOWN_SWITCH' , 0);
 
 % MESSAGE_SHUTDOWN_SWITCH = 0 = MESSAGE DATA ON
 % MESSAGE_SHUTDOWN_SWITCH = 1 = MESSAGE DATA OFF
-pause( global_pause ); wordwrite( roach, 'MESSAGE_SHUTDOWN_SWITCH', 0);
+pause( global_pause ); wordwrite( roach, 'MESSAGE_SHUTDOWN_SWITCH2', 0);
 
 % MESSAGE_CLK_SELECT = 0 = CLK PRN CLOCK (1.023 MHZ)
 % MESSAGE_CLK_SELECT = 1 = MESSAGE CLK (50 bps)
-pause( global_pause ); wordwrite( roach, 'MESSAGE_CLK_SELECT', 1 );
+pause( global_pause ); wordwrite( roach, 'MESSAGE_CLK_SELECT', 1);
 
 % Reset GLOBAL_RESET to start transmission
 %pause( global_pause ); wordwrite( roach, 'GLOBAL_RESET',0);
@@ -86,4 +97,13 @@ pause( global_pause ); wordwrite( roach, 'DAC_dac_reset', 0 );
 %   Make sure that the message signal are in BYTES before being written
 %   to the BRAM.
 pause( global_pause );
-write(roach, 'Message_Signal_bram1', repeating_array' )
+write(roach, 'Message_Signal1_bram1', repeating_array' );
+
+pause( global_pause );
+write(roach, 'Message_Signal2_bram1', repeating_array' );
+
+pause( global_pause );
+write(roach, 'Message_Signal3_bram1', repeating_array' );
+
+pause( global_pause );
+write(roach, 'Message_Signal4_bram1', repeating_array' );

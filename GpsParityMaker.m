@@ -85,8 +85,7 @@ function D_result = ModularTwoAddition( D_star, message, parity_bit )
 % ----------------------------------------------------------------------- %
 
  % Set D_start to D_result so it can be used later for caluclation
- D_result = D_star
- message
+ D_result = D_star;
  % Message must be a 24-bit number
  if ( length( message ) == 24 )
      % Define the message bits used for calculation depending on
