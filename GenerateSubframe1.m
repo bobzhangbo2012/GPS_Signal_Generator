@@ -1,5 +1,5 @@
 function [ subframe_1_300_bits ] = GenerateSubframe1( ...
-    GPS_week_number, TOW_truncated, D_star  )
+    GPS_week_number, TOW_truncated, sv_health, D_star  )
 % ----------------------------------------------------------------------- %
 %  GenerateSubframe1 - Generates the first subframe of a GPS Message. It  %
 %   contains 300 bits, 10 words each 30 bits. The following define each   %
@@ -32,7 +32,7 @@ frame_id = [ 0 0 1 ];
 % Define all  300 bits, 10 words.
 word_1  = GenerateTLMWord( D_star );
 word_2  = GenerateHOWWord( TOW_truncated, frame_id, word_1( 29:30 ));
-word_3  = GenerateWord3( GPS_week_number, word_2( 29:30 ) );
+word_3  = GenerateWord3( GPS_week_number, sv_health, word_2( 29:30 ) );
 word_4  = GenerateWord4( word_3(29:30) );
 word_5  = GenerateWord5( word_4(29:30) );
 word_6  = GenerateWord6( word_5(29:30) );
@@ -69,7 +69,7 @@ subframe_1_300_bits = [ word_1 ;
 end
 
 
-function word_3 = GenerateWord3( GPS_week_number, D_star )
+function word_3 = GenerateWord3( GPS_week_number, health, D_star )
 % ------------------------------------------------------------------------%
 % GenerateWord3() - Generates a 30 bit word containing Week Number,
 %   P/CA bit , URA Index, SV Health, Issue of Data, and Parity bits.
@@ -100,7 +100,11 @@ function word_3 = GenerateWord3( GPS_week_number, D_star )
     %   1 = some or all NAV data are bad
     % Other 5 bits indicate health of singal components. For this project
     % all health bits are set to '0' indicating a healthy signal
-    sv_health = [ 0 0 0 0 0 0 ];
+    if health == 0
+        sv_health = [ 0 0 0 0 0 0 ];
+    else
+        sv_health = dec2bin( health, 6);
+    end
 
     % Define IODC
     % Bits 1 thru 8 are the LSB of the IODC. the 2 MSB of the IODC are
