@@ -24,9 +24,9 @@ TLM_preamble = [1 0 0 0 1 0 1 1];
 TLM_message = zeros(1 ,14);
 
 % Integrity status flag
-integrity_status_flag = 1;
+integrity_status_flag = 0;
 % Reserve bits
-TLM_reserve = 1;
+TLM_reserve = 0;
 
 % Pack'em into a 24-bit number
 TLM_word = [ TLM_preamble TLM_message integrity_status_flag TLM_reserve ];
