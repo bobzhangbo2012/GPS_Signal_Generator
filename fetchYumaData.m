@@ -125,12 +125,9 @@ function all_sv_data = ExtractData( almanac_file )
                                                         end
                                                     end
                                                     current_line = fgetl( file_id );
-                                                    % Get Af1
-                                                    for count_char_6 = 0:length( current_line )-1
-                                                        if strcmp( current_line( end-count_char_6 ), ' ')
-                                                            sv_data = [ sv_data str2double( current_line( end-( count_char_6-1 ):end )) ];
-                                                            break;
-                                                        end
+                                                    if strfind( current_line, 'Af1')
+                                                        af1 = ParseValueInCurrentLine( current_line );
+                                                        sv_data = [ sv_data af1 ];
                                                     end
                                                 end
                                             end
@@ -150,4 +147,14 @@ function all_sv_data = ExtractData( almanac_file )
     end
 
     fclose( file_id );
+end
+
+
+function parsed_value = ParseValueInCurrentLine( current_line )
+    for count_char = 0:length( current_line ) - 1
+        if strcmp( current_line( end-count_char ), ' ' )
+            parsed_value = str2double( current_line( end - ( count_char - 1 ):end )) ;
+            break;
+        end
+    end
 end
