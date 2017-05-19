@@ -9,7 +9,9 @@
 % ----------------------------------------------------------------------- %
 function data = fetchYumaData()
     % Get day of the year
-    day_of_year = floor( now - datenum( 2017, 1, 1, 0, 0, 0 ));
+    % Note: calculation of day of the year sometime throws an error
+    %   because it increases the current day faster than the website.
+    day_of_year = floor( now - datenum( 2017, 1, 0, 0, 0, 0 ));
 
     % Fetch the data from the website
     base_url = 'https://gps.afspc.af.mil/gps/archive/2017/almanacs/yuma/';
@@ -28,9 +30,11 @@ function data = fetchYumaData()
         end
     end
 
+    % Get YUMA data
     data = ExtractData( almanac_file );
 
-
+    % Clean up created file
+    delete *.alm;
 end
 
 % ----------------------------------------------------------------------- %
@@ -51,79 +55,58 @@ function all_sv_data = ExtractData( almanac_file )
     while ~feof( file_id )
         % If current line is the SV ID start saving info
         if strfind( current_line, 'ID')
-            sv_data = [ str2num( current_line( end-2:end )) ]; % get SV ID
+            id = ParseValueInCurrentLine( current_line );
+            sv_data =  id ;
             current_line = fgetl( file_id ); % Go to next line
             % Get health
             if strfind( current_line, 'Health')
-                sv_data = [ sv_data str2num( current_line( end-2:end )) ];
+                health = ParseValueInCurrentLine( current_line );
+                sv_data = [ sv_data health ];
                 current_line = fgetl( file_id ); % Go to next line
                 % Get Eccentricity
                 if strfind( current_line, 'Eccentricity' )
-                    sv_data = [ sv_data str2double( current_line( end-16:end ))];
+                    eccentricity = ParseValueInCurrentLine( current_line );
+                    sv_data = [ sv_data eccentricity ];
                     current_line = fgetl( file_id );
                     % Get Time of Applicability
                     if strfind( current_line, 'Time of Applicability')
-                        % Check size of number
-                        if strcmp( current_line( end-10 ), ' ' )
-                            % This is a 9 digit number
-                            sv_data = [ sv_data str2num( current_line( end-9:end ))];
-                        else
-                            % It is a 10 digit number
-                            sv_data = [ sv_data str2num( current_line( end-10:end ))];
-                        end
+                        time_of_app = ParseValueInCurrentLine( current_line );
+                        sv_data = [ sv_data time_of_app ];
                         current_line = fgetl( file_id );
                         % Get Orbital Inclination
                         if strfind( current_line, 'Orbital Inclination' )
-                            sv_data = [ sv_data str2double( current_line( end-11:end ))];
+                            orbital_incl = ParseValueInCurrentLine( current_line );
+                            sv_data = [ sv_data orbital_incl ];
                             current_line = fgetl( file_id );
                             % Get Rate of Right Ascen
                             if strfind( current_line, 'Rate of Right Ascen')
-                                for count_char_1 = 0:length( current_line )-1
-                                    if strcmp( current_line( end-count_char_1 ), ' ')
-                                        sv_data = [ sv_data str2double( current_line( end-( count_char_1-1 ):end )) ];
-                                        break;
-                                    end
-                                end
+                                rate_of_right_ascen = ParseValueInCurrentLine( current_line );
+                                sv_data = [ sv_data rate_of_right_ascen ];
                                 current_line = fgetl( file_id );
                                 % Get SQRT(A)
                                 if strfind( current_line, 'SQRT(A)')
-                                    sv_data = [ sv_data str2double( current_line( end-10:end )) ];
+                                    sqroot_a = ParseValueInCurrentLine( current_line );
+                                    sv_data = [ sv_data sqroot_a ];
                                     current_line = fgetl( file_id );
                                     % get Right Ascen at Week
                                     if strfind( current_line, 'Right Ascen at Week')
-                                        for count_char_2 = 0:length( current_line )-1
-                                            if strcmp( current_line( end-count_char_2 ), ' ' )
-                                                sv_data = [ sv_data str2double( current_line( end-( count_char_2-1 ):end )) ];
-                                                break;
-                                            end
-                                        end
+                                        ascen_at_week = ParseValueInCurrentLine( current_line );
+                                        sv_data = [ sv_data ascen_at_week ];
                                         current_line = fgetl( file_id );
                                         % Get Argument of Perigee
                                         if strfind( current_line, 'Argument of Perigee')
-                                            for count_char_3 = 0:length( current_line )-1
-                                                if strcmp( current_line( end-count_char_3 ), ' ' )
-                                                    sv_data = [ sv_data str2double( current_line( end-( count_char_3-1 ):end )) ];
-                                                    break;
-                                                end
-                                            end
+                                            arg_perigee = ParseValueInCurrentLine( current_line );
+                                            sv_data = [ sv_data arg_perigee ];
                                             current_line = fgetl( file_id );
                                             % Get Mean Anom
                                             if strfind( current_line, 'Mean Anom')
-                                                for count_char_4 = 0:length( current_line )-1
-                                                    if strcmp( current_line( end-count_char_4 ), ' ' )
-                                                        sv_dat = [ sv_data str2double( current_line( end-( count_char_4-1 ):end )) ];
-                                                        break;
-                                                    end
-                                                end
+                                                mean_anom = ParseValueInCurrentLine( current_line );
+                                                sv_data = [ sv_data mean_anom ];
                                                 current_line = fgetl( file_id );
                                                 % Get Af0
                                                 if strfind( current_line, 'Af0' )
-                                                    for count_char_5 = 0:length( current_line )-1
-                                                        if strcmp( current_line( end-count_char_5 ), ' ')
-                                                            sv_data = [ sv_data str2double( current_line( end-( count_char_5-1 ):end )) ];
-                                                            break;
-                                                        end
-                                                    end
+                                                    af0 = ParseValueInCurrentLine( current_line );
+                                                    sv_data = [ sv_data af0 ];
                                                     current_line = fgetl( file_id );
                                                     if strfind( current_line, 'Af1')
                                                         af1 = ParseValueInCurrentLine( current_line );
@@ -149,7 +132,16 @@ function all_sv_data = ExtractData( almanac_file )
     fclose( file_id );
 end
 
-
+% ----------------------------------------------------------------------- %
+%   ParseValueInCurrentLine() - This function takes in the current line   %
+%   being read and finds the value at the end-of-the-line. For example    %
+%   ID:             32          will return the number 32                 %
+%   SQRT(A)  (m 1/2)            5153.687012  will return 5153.687012      %
+%                                                                         %
+%       Important: A YUMA almanac file expected                           %
+% ----------------------------------------------------------------------- %
+%               Created by Kurt Pedrosa  -- May 18th 2017                 %
+% ----------------------------------------------------------------------- %
 function parsed_value = ParseValueInCurrentLine( current_line )
     for count_char = 0:length( current_line ) - 1
         if strcmp( current_line( end-count_char ), ' ' )
