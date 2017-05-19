@@ -3,7 +3,7 @@
 %    negative number ( if so, take two's complement of said value ) and,  %
 %    converts it to a binary array. For example:                          %
 %                                                                         %
-%              -7.4586e+08 =
+%              -7.4586e+08 = 1101001110001011000111100000000
 %                                                                         %
 % ----------------------------------------------------------------------- %
 %               Created by Kurt Pedrosa  -- May 19th 2017                 %

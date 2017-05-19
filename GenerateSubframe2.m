@@ -1,5 +1,5 @@
 function [ subframe_2_300_bits ] = GenerateSubframe2( ...
-    TOW_truncated, D_star  )
+    TOW_truncated, sv_M_not_radians, sv_eccentricity, sv_sqrt_a, D_star  )
     % ----------------------------------------------------------------------- %
     %  GenerateSubframe2 - Generates the second subframe of a GPS Message. It %
     %   contains 300 bits, 10 words each 30 bits. The following define each   %
@@ -36,6 +36,10 @@ function [ subframe_2_300_bits ] = GenerateSubframe2( ...
     % observed values from:                                                   %
     %   http://www.colorado.edu/geography/gcraft/notes/gps/ephclock.html      %
     %                           March 14th 2017                               %
+    %                                                                         %
+    %   + by Kurt: Changed all GenerateWord functions to take input from      %
+    % values fetched from Yuma almanac.                                       %
+    %                           May 19th 2017                                 %
     % ----------------------------------------------------------------------- %
 
     % Define Frame
@@ -45,12 +49,12 @@ function [ subframe_2_300_bits ] = GenerateSubframe2( ...
     word_1  = GenerateTLMWord( D_star );
     word_2  = GenerateHOWWord( TOW_truncated, frame_id, word_1( 29:30 ));
     word_3  = GenerateWord3( word_2( 29:30 ) );
-    word_4  = GenerateWord4( word_3(29:30) );
-    word_5  = GenerateWord5( word_4(29:30) );
-    word_6  = GenerateWord6( word_5(29:30) );
-    word_7  = GenerateWord7( word_6(29:30) );
-    word_8  = GenerateWord8( word_7(29:30) );
-    word_9  = GenerateWord9( word_8(29:30) );
+    [ M_not word_4 ]  = GenerateWord4( sv_M_not_radians, word_3(29:30) );
+    word_5  = GenerateWord5( M_not, word_4(29:30) );
+    [ eccentricity word_6 ] = GenerateWord6( sv_eccentricity, word_5(29:30) );
+    word_7  = GenerateWord7( eccentricity, word_6(29:30) );
+    [ sqrt_a word_8 ]  = GenerateWord8( sv_sqrt_a, word_7(29:30) );
+    word_9  = GenerateWord9( sqrt_a, word_8(29:30) );
     word_10 = GenerateWord10( word_9(29:30) );
 
     % Returns a array of 10 x 30 bits
@@ -116,7 +120,7 @@ function word_3 = GenerateWord3( D_star )
     word_3 = GpsParityMaker( 0, word_3_no_parity, D_star );
 end
 
-function word_4 = GenerateWord4( D_star )
+function [ M_not word_4 ] = GenerateWord4( sv_M_not_radians, D_star )
 % ------------------------------------------------------------------------%
 % GenerateWord4() - Generates a 30 bit word containg Delta_n (16-bits),
 %    M_zero (MSB, 8-bits)  , and Parity bits.
@@ -144,7 +148,8 @@ function word_4 = GenerateWord4( D_star )
     %       = 0.4507140664408/(2^-31) = 9.6790 e8
     %       = 00111001 101100001111111110011111 binary
     %   Note: 1 sem-circle = 3.1415926535 radians
-    M_not_MSB = [ 0 0 1 1 1 0 0 1 ]; % MSB
+    M_not =  SvData2Binary( ( sv_M_not_radians/pi )/( 2^-31 ), 32 );
+    M_not_MSB = M_not(1:8); % MSB
 
     % Pack'em all into a 24-bit number
     word_4_no_parity = ...
@@ -153,7 +158,7 @@ function word_4 = GenerateWord4( D_star )
     word_4 = GpsParityMaker( 0, word_4_no_parity, D_star );
 end
 
-function word_5 = GenerateWord5( D_star )
+function word_5 = GenerateWord5( M_not, D_star )
 % ------------------------------------------------------------------------%
 % GenerateWord5() - Generates a 30 bit word containg M_zero (LSB, 24-bits)  ,
 % and Parity bits.
@@ -169,7 +174,7 @@ function word_5 = GenerateWord5( D_star )
     %       = 0.4507140664408/(2^-31) = 9.6790 e8
     %       = 00111001 msb 101100001111111110011111 lsb binary
     %   Note: 1 sem-circle = 3.1415926535 radians
-    M_not_LSB = [ 1 0 1 1 0 0 0 0 1 1 1 1 1 1 1 1 1 0 0 1 1 1 1 1 ];
+    M_not_LSB = M_not(9:end);
 
     % Pack'em all into a 24-bit number
     word_5_no_parity = M_not_LSB ;
@@ -177,7 +182,7 @@ function word_5 = GenerateWord5( D_star )
     word_5 = GpsParityMaker( 0, word_5_no_parity, D_star );
 end
 
-function word_6 = GenerateWord6( D_star )
+function [ eccentricity word_6 ] = GenerateWord6( sv_eccentricity, D_star )
 % ------------------------------------------------------------------------%
 % GenerateWord6() - Generates a 30 bit word containg ,C_UC (16-bits),
 % eccentricity (MSB, 8-bits) and Parity bits.
@@ -202,26 +207,25 @@ function word_6 = GenerateWord6( D_star )
     % eccentricity has a range o 0.0 to 0.03
     %       e = 0.00354898 = 0.00354898/2^-33 = 3.0486e+07
     %       00000001 msb110100010010110000000010 lsb
-    eccentricity_dec = 0.00354898;
+    eccentricity_dec = sv_eccentricity;
 
     % Check range
-    %   Note from the author: " I do not like that it checks the range twice.
-    %        Here in word 6 and also in word 7. Need fix." -kp
     if eccentricity_dec < 0.0 || eccentricity_dec > 0.03
+        eccentricity = dec2bin( 0, 32 );
         error( 'Eccentricity value passed is out-of-range. Check Word 7 Subframe 2.' );
     else
         %eccentricity = [ 1 1 0 1 0 0 0 1 0 0 1 0 1 1 0 0 0 0 0 0 0 0 1 0 ]; % test
-        eccentricity = str2bin_array( dec2bin( eccentricity_dec/2^-33, 32 ) ); % Returns a 32-bit binary array
-        eccentricity = eccentricity(1:8); % Take 24-bit LSB only
+        eccentricity = SvData2Binary( eccentricity_dec/2^-33, 32);
+        eccentricity_MSB = eccentricity(1:8); % Take 24-bit LSB only
     end
 
     % Pack'em all into a 24-bit number
-    word_6_no_parity = [ C_UC eccentricity ];
+    word_6_no_parity = [ C_UC eccentricity_MSB ];
 
     word_6 = GpsParityMaker(0,  word_6_no_parity, D_star );
 end
 
-function word_7 = GenerateWord7( D_star )
+function word_7 = GenerateWord7( eccentricity, D_star )
 % ------------------------------------------------------------------------%
 % GenerateWord7() - Generates a 30 bit word containg ,eccentricity ( 24 LSB )
 % and Parity bits.
@@ -235,26 +239,15 @@ function word_7 = GenerateWord7( D_star )
     % eccentricity has a range o 0.0 to 0.03
     %       e = 0.00354898 = 0.00354898/2^-33 = 3.0486e+07
     %       00000001 msb 110100010010110000000010 lsb
-    eccentricity_dec = 0.00354898;
-
-    % Check range
-    %   Note from the author: " I do not like that it checks the range twice.
-    %        Here in word 7 and also in word 6. Need fix." -kp
-    if eccentricity_dec < 0.0 || eccentricity_dec > 0.03
-        error( 'Eccentricity value passed is out-of-range. Check Word 7 Subframe 2.' );
-    else
-        %eccentricity = [ 1 1 0 1 0 0 0 1 0 0 1 0 1 1 0 0 0 0 0 0 0 0 1 0 ]; % test
-        eccentricity = str2bin_array( dec2bin( eccentricity_dec/2^-33, 32 ) ); % Returns a 32-bit binary array
-        eccentricity = eccentricity(9:end); % Take 24-bit LSB only
-    end
+    eccentricity_LSB = eccentricity(9:end);
 
     % Pack'em all into a 24-bit number
-    word_7_no_parity = eccentricity;
+    word_7_no_parity = eccentricity_LSB;
 
     word_7 = GpsParityMaker( 0, word_7_no_parity, D_star );
 end
 
-function word_8 = GenerateWord8( D_star )
+function [ sqrt_a word_8 ] = GenerateWord8( sv_sqrt_a, D_star )
 % ------------------------------------------------------------------------%
 % GenerateWord8() - Generates a 30 bit word containg ,C_US (16 bits),
 % sqrt_a (MSB, 8-bits)  and Parity bits.
@@ -276,24 +269,25 @@ function word_8 = GenerateWord8( D_star )
     % sqrt_a is the squar root of a meter and has a Scale Factor of 2^-19
     % sqrt_a has a range of 2530 to 8192
     %   5153.79 = 5153.79/2^-19 = 2.7021e+09 = 10100001 msb 000011100101000111101011 lsb
-    sqrt_a_dec = 5153.79;
+    sqrt_a_dec = sv_sqrt_a;
 
     % Check range
     % Note from the author: "Again, checking range twice. I don't like it!" -kp
     if sqrt_a_dec < 2530 || sqrt_a_dec > 8192
+        sqrt_a = bin2dec( 0, 32 );
         error('Squre Root of the Semi-Major Axis is out-of-range. Check Word 8 of Subframe 2.');
     else
-        sqrt_a = str2bin_array( dec2bin( sqrt_a_dec/2^-19, 32 ) );
-        sqrt_a = sqrt_a( 1:8 );
+        sqrt_a = SvData2Binary( sqrt_a_dec/2^-19, 32 );
+        sqrt_a_MSB = sqrt_a( 1:8 );
     end
 
     % Pack'em all into a 24-bit number
-    word_8_no_parity = [ C_US sqrt_a ];
+    word_8_no_parity = [ C_US sqrt_a_MSB ];
 
     word_8 = GpsParityMaker( 0, word_8_no_parity, D_star );
 end
 
-function word_9 = GenerateWord9( D_star )
+function word_9 = GenerateWord9( sqrt_a, D_star )
 % ------------------------------------------------------------------------%
 % GenerateWord8() - Generates a 30 bit word containg , SV clock correction
 %   term A_f2 and A_f1 and Parity bits.
@@ -306,19 +300,10 @@ function word_9 = GenerateWord9( D_star )
     % sqrt_a is the squar root of a meter and has a Scale Factor of 2^-19
     % sqrt_a has a range of 2530 to 8192
     %   5153.79 = 5153.79/2^-19 = 2.7021e+09 = 10100001 msb 000011100101000111101011 lsb
-    sqrt_a_dec = 5153.79;
-
-    % Check range
-    % Note from the author: "Again, checking range twice. I don't like it!" -kp
-    if sqrt_a_dec < 2530 || sqrt_a_dec > 8192
-        error('Squre Root of the Semi-Major Axis is out-of-range. Check Word 9 of Subframe 2.');
-    else
-        sqrt_a = str2bin_array( dec2bin( sqrt_a_dec/2^-19, 32 ) );
-        sqrt_a = sqrt_a( 9:end );
-    end
+    sqrt_a_LSB = sqrt_a( 9:end );
 
     % Pack'em all into a 24-bit number
-    word_9_no_parity = [ sqrt_a ];
+    word_9_no_parity = sqrt_a_LSB ;
 
     word_9 = GpsParityMaker( 0, word_9_no_parity, D_star );
 end

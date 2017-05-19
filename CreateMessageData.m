@@ -33,21 +33,39 @@ function message_data = CreateMessageData()
     % This is a 10-bit modulo 1024 representatino of the current GPS week number
     transmission_week_number = ...
     str2bin_array( dec2bin( mod( true_gps_week, 1024 )));
-    
-    subframe_1_1 = GenerateSubframe1( transmission_week_number, str2bin_array( GetHOWTimeWeek( gps_seconds_of_week )), [ 0 0 ]);
-    subframe_2_1 = GenerateSubframe2( str2bin_array( GetHOWTimeWeek( gps_seconds_of_week + 6 )),  subframe_1_1( 10, 29:30 ));
-    subframe_3_1 = GenerateSubframe3( str2bin_array( GetHOWTimeWeek( gps_seconds_of_week + 12 )), subframe_2_1( 10, 29:30 ));
 
-    subframe_1_2 = GenerateSubframe1( transmission_week_number, str2bin_array( GetHOWTimeWeek( gps_seconds_of_week + 18)), subframe_3_1(10, 29:30) );
-    subframe_2_2 = GenerateSubframe2( str2bin_array( GetHOWTimeWeek( gps_seconds_of_week + 24 )),  subframe_1_2( 10, 29:30 ));
-    subframe_3_2 = GenerateSubframe3( str2bin_array( GetHOWTimeWeek( gps_seconds_of_week + 30 )), subframe_2_2( 10, 29:30 ));
+    full_almanac_data  = fetchYumaData();
+    selected_sv = 9;
+    index_selected_sv = find( full_almanac_data == selected_sv );
 
-    subframe_1_3 = GenerateSubframe1( transmission_week_number, str2bin_array( GetHOWTimeWeek( gps_seconds_of_week + 36)), subframe_3_2(10, 29:30) );
-    subframe_2_3 = GenerateSubframe2( str2bin_array( GetHOWTimeWeek( gps_seconds_of_week + 42 )),  subframe_1_3( 10, 29:30 ));
-    subframe_3_3 = GenerateSubframe3( str2bin_array( GetHOWTimeWeek( gps_seconds_of_week + 48 )), subframe_2_3( 10, 29:30 ));
+    subframe_1 = GenerateSubframe1( ...
+        transmission_week_number, ...
+        str2bin_array( GetHOWTimeWeek( gps_seconds_of_week )),...
+        full_almanac_data( index_selected_sv, 2 ), ...
+        [ 0 0 ]);
 
+    subframe_2 = GenerateSubframe2( ...
+        str2bin_array( GetHOWTimeWeek( gps_seconds_of_week )),...
+        full_almanac_data( index_selected_sv, 10 ),...
+        full_almanac_data( index_selected_sv, 3 ),...
+        full_almanac_data( index_selected_sv, 7 ),...
+        subframe_1( 10, 29:30 ));
 
-    message_data = [ subframe_1_1; subframe_2_1; subframe_3_1; subframe_1_2; subframe_2_2; subframe_3_2; subframe_1_3; subframe_2_3; subframe_3_3 ];
+    message_data = [ subframe_1; subframe_2 ];
+    %subframe_1_1 = GenerateSubframe1( transmission_week_number, str2bin_array( GetHOWTimeWeek( gps_seconds_of_week )), [ 0 0 ]);
+    % subframe_2_1 = GenerateSubframe2( str2bin_array( GetHOWTimeWeek( gps_seconds_of_week + 6 )),  subframe_1_1( 10, 29:30 ));
+    % subframe_3_1 = GenerateSubframe3( str2bin_array( GetHOWTimeWeek( gps_seconds_of_week + 12 )), subframe_2_1( 10, 29:30 ));
+    %
+    % subframe_1_2 = GenerateSubframe1( transmission_week_number, str2bin_array( GetHOWTimeWeek( gps_seconds_of_week + 18)), subframe_3_1(10, 29:30) );
+    % subframe_2_2 = GenerateSubframe2( str2bin_array( GetHOWTimeWeek( gps_seconds_of_week + 24 )),  subframe_1_2( 10, 29:30 ));
+    % subframe_3_2 = GenerateSubframe3( str2bin_array( GetHOWTimeWeek( gps_seconds_of_week + 30 )), subframe_2_2( 10, 29:30 ));
+    %
+    % subframe_1_3 = GenerateSubframe1( transmission_week_number, str2bin_array( GetHOWTimeWeek( gps_seconds_of_week + 36)), subframe_3_2(10, 29:30) );
+    % subframe_2_3 = GenerateSubframe2( str2bin_array( GetHOWTimeWeek( gps_seconds_of_week + 42 )),  subframe_1_3( 10, 29:30 ));
+    % subframe_3_3 = GenerateSubframe3( str2bin_array( GetHOWTimeWeek( gps_seconds_of_week + 48 )), subframe_2_3( 10, 29:30 ));
+    %
+    %
+    % message_data = [ subframe_1_1; subframe_2_1; subframe_3_1; subframe_1_2; subframe_2_2; subframe_3_2; subframe_1_3; subframe_2_3; subframe_3_3 ];
 
 end
 
