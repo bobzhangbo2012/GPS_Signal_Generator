@@ -1,5 +1,5 @@
 function [ subframe_3_300_bits ] = GenerateSubframe3( ...
-    TOW_truncated, D_star  )
+    TOW_truncated, sv_i_not, sv_omega, sv_omega_dot, D_star  )
     % ----------------------------------------------------------------------- %
     %  GenerateSubframe3 - Generates the second subframe of a GPS Message. It %
     %   contains 300 bits, 10 words each 30 bits. The following define each   %
@@ -40,11 +40,11 @@ function [ subframe_3_300_bits ] = GenerateSubframe3( ...
     word_2  = GenerateHOWWord( TOW_truncated, frame_id, word_1( 29:30 ));
     word_3  = GenerateWord3( word_2( 29:30 ) );
     word_4  = GenerateWord4( word_3(29:30) );
-    word_5  = GenerateWord5( word_4(29:30) );
-    word_6  = GenerateWord6( word_5(29:30) );
-    word_7  = GenerateWord7( word_6(29:30) );
-    word_8  = GenerateWord8( word_7(29:30) );
-    word_9  = GenerateWord9( word_8(29:30) );
+    [ i_not word_5 ] = GenerateWord5( sv_i_not, word_4(29:30) );
+    word_6  = GenerateWord6( i_not, word_5(29:30) );
+    [ omega word_7 ]  = GenerateWord7( sv_omega, word_6(29:30) );
+    word_8  = GenerateWord8( omega, word_7(29:30) );
+    word_9  = GenerateWord9( sv_omega_dot, word_8(29:30) );
     word_10 = GenerateWord10( word_9(29:30) );
 
     % Returns a array of 10 x 30 bits
@@ -119,7 +119,7 @@ function word_4 = GenerateWord4( D_star )
     word_4 = GpsParityMaker( 0, word_4_no_parity, D_star );
 end
 
-function word_5 = GenerateWord5( D_star )
+function [i_not word_5 ] = GenerateWord5( sv_i_not, D_star )
 % ------------------------------------------------------------------------%
 % GenerateWord5() - Generates a 30 bit word containg C_is ( 26-bits),
 %   i_not ( 8 bits MSB ) and Parity bits.
@@ -146,7 +146,8 @@ function word_5 = GenerateWord5( D_star )
     %           found in Table 20-IV
     %  0.950462 rad = 0.3025 semi-circles = 0.3025/2^-31
     %   00100110 msb 101110000101000111101011 lsb
-    i_not_msb = [ 0 0 1 0 0 1 1 0 ];
+    i_not = SvData2Binary( ( sv_i_not/pi )/( 2^-31 ), 32 );
+    i_not_msb = i_not( 1:8 );
 
     % Pack'em all into a 24-bit number
     word_5_no_parity = [ C_is i_not_msb ];
@@ -154,7 +155,7 @@ function word_5 = GenerateWord5( D_star )
     word_5 = GpsParityMaker( 0, word_5_no_parity, D_star );
 end
 
-function word_6 = GenerateWord6( D_star )
+function word_6 = GenerateWord6( i_not, D_star )
 % ------------------------------------------------------------------------%
 % GenerateWord6() - Generates a 30 bit word containg ,C_UC (16-bits),
 % eccentricity (MSB, 8-bits) and Parity bits.
@@ -170,7 +171,7 @@ function word_6 = GenerateWord6( D_star )
     %           found in Table 20-IV
     %  0.950462 rad = 0.3025 semi-circles = 0.3025/2^-31
     %   00100110 msb 101110000101000111101011 lsb
-    i_not_lsb = [ 1 0 1 1 1 0 0 0 0 1 0 1 0 0 0 1 1 1 1 0 1 0 1 1 ];
+    i_not_lsb = i_not( 9:end );
 
     % Pack'em all into a 24-bit number
     word_6_no_parity = i_not_lsb;
@@ -178,7 +179,7 @@ function word_6 = GenerateWord6( D_star )
     word_6 = GpsParityMaker(0,  word_6_no_parity, D_star );
 end
 
-function word_7 = GenerateWord7( D_star )
+function word_7 = GenerateWord7( sv_omega, D_star )
 % ------------------------------------------------------------------------%
 % GenerateWord7() - Generates a 30 bit word containg C_rc (16-bits) and  omega (8-bits MSB)
 % and Parity bits.
@@ -202,15 +203,7 @@ function word_7 = GenerateWord7( D_star )
     %       5613 Dec = 0010100000110100 Binray
     C_rc = [ 0 0 1 0 1 0 0 0 0 0 1 1 0 1 0 0 ]; % 175.406 meter
     % C_rc = [ 0 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0]; % 1 meter
-  % Define omega
-  % omega is the Argument of Perigee which is the moment in the satellite's orbit
-  %   that it is closest to earth.
-  % omega has 32 bits, where 8-bt MSB is in word 7 subframe 3
-  % omega has a Scale Factor of 2^-31 and units of semi-circles
-  % -2.56865 rad  = -0.8176 semi-circles = -0.8176/2^-31 = -1.7558e9
-  % 1.7558e9 = 01101000101001110110000111000000
-  % -1.7558e9 = 10010111 msb 010110001001111001000000 lsb
-  omega = [ 1 0 0 1 0 1 1 1 ];
+
     % Define omega
     % omega is the Argument of Perigee which is the moment in the satellite's orbit
     %   that it is closest to earth.
@@ -219,7 +212,8 @@ function word_7 = GenerateWord7( D_star )
     % -2.56865 rad  = -0.8176 semi-circles = -0.8176/2^-31 = -1.7558e9
     % 1.7558e9 = 01101000101001110110000111000000
     % -1.7558e9 = 10010111 msb 010110001001111001000000 lsb
-    omega_msb = [ 1 0 0 1 0 1 1 1 ];
+    omega = SvData2Binary( (sv_omega/pi)/2^-31, 32 );
+    omega_msb = omega( 1:8 );
 
 
 
@@ -229,7 +223,7 @@ function word_7 = GenerateWord7( D_star )
     word_7 = GpsParityMaker( 0, word_7_no_parity, D_star );
 end
 
-function word_8 = GenerateWord8( D_star )
+function word_8 = GenerateWord8( omega, D_star )
 % ------------------------------------------------------------------------%
 % GenerateWord8() - Generates a 30 bit word containg ,omega (24 bits LSB)
 %  and Parity bits.
@@ -245,7 +239,8 @@ function word_8 = GenerateWord8( D_star )
   % -2.56865 rad  = -0.8176 semi-circles = -0.8176/2^-31 = -1.7558e9
   % 1.7558e9 = 01101000101001110110000111000000
   % -1.7558e9 = 10010111 msb 010110001001111001000000 lsb
-  omega_lsb = [ 0 1 0 1 1 0 0 0 1 0 0 1 1 1 1 0 0 1 0 0 0 0 0 0 ];
+  %omega_lsb = [ 0 1 0 1 1 0 0 0 1 0 0 1 1 1 1 0 0 1 0 0 0 0 0 0 ];
+  omega_lsb = omega( 9:end );
 
     % Pack'em all into a 24-bit number
     word_8_no_parity = omega_lsb;
@@ -253,7 +248,7 @@ function word_8 = GenerateWord8( D_star )
     word_8 = GpsParityMaker( 0, word_8_no_parity, D_star );
 end
 
-function word_9 = GenerateWord9( D_star )
+function word_9 = GenerateWord9( sv_omega_dot, D_star )
 % ------------------------------------------------------------------------%
 % GenerateWord9() - Generates a 30 bit word containg , omega_dot ( 24-bits)
 %  and Parity bits.
@@ -269,16 +264,17 @@ function word_9 = GenerateWord9( D_star )
     % 2.3627e4 =  000000000101110001001011
     % -2.3627e4 = 111111111010001110110101
 
-    omega_dot_dec = -2.6861e-9;
+    omega_dot_dec = sv_omega_dot/pi;
 
     % Check range
     if omega_dot_dec < -6.33E-07  || omega_dot_dec > 0
+      omega_dot = bin2dec( 0, 24 );
         error('The Rate of Right Ascension is out-of-range. Check Word 9 of Subframe 3.');
     else
         % Omega dot binary not calculated here becuase Two's compelement
         %   of value has been done by head. A function needs to be
         %   implemented to calculate the omega_dot_dec negative values.
-        omega_dot = [1 1 1 1 1 1 1 1 1 0 1 0 0 0 1 1 1 0 1 1 0 1 0 1 ];
+        omega_dot = SvData2Binary( omega_dot_dec/ 2^-43, 24 );
     end
 
     % Pack'em all into a 24-bit number

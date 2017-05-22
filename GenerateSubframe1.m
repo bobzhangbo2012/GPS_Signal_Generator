@@ -1,5 +1,5 @@
 function [ subframe_1_300_bits ] = GenerateSubframe1( ...
-    GPS_week_number, TOW_truncated, sv_health, D_star  )
+    GPS_week_number, TOW_truncated, sv_health, sv_af0, sv_af1, D_star  )
 % ----------------------------------------------------------------------- %
 %  GenerateSubframe1 - Generates the first subframe of a GPS Message. It  %
 %   contains 300 bits, 10 words each 30 bits. The following define each   %
@@ -38,8 +38,8 @@ word_5  = GenerateWord5( word_4(29:30) );
 word_6  = GenerateWord6( word_5(29:30) );
 word_7  = GenerateWord7( word_6(29:30) );
 word_8  = GenerateWord8( word_7(29:30) );
-word_9  = GenerateWord9( word_8(29:30) );
-word_10 = GenerateWord10( word_9(29:30) );
+word_9  = GenerateWord9( sv_af1, word_8(29:30) );
+word_10 = GenerateWord10( sv_af0, word_9(29:30) );
 
 % Returns a array of 10 x 30 bits
 %   Each row is a word. For example
@@ -69,7 +69,7 @@ subframe_1_300_bits = [ word_1 ;
 end
 
 
-function word_3 = GenerateWord3( GPS_week_number, health, D_star )
+function word_3 = GenerateWord3( GPS_week_number, sv_health, D_star )
 % ------------------------------------------------------------------------%
 % GenerateWord3() - Generates a 30 bit word containing Week Number,
 %   P/CA bit , URA Index, SV Health, Issue of Data, and Parity bits.
@@ -100,10 +100,10 @@ function word_3 = GenerateWord3( GPS_week_number, health, D_star )
     %   1 = some or all NAV data are bad
     % Other 5 bits indicate health of singal components. For this project
     % all health bits are set to '0' indicating a healthy signal
-    if health == 0
-        sv_health = [ 0 0 0 0 0 0 ];
+    if sv_health == 0
+        health = [ 0 0 0 0 0 0 ];
     else
-        sv_health = dec2bin( health, 6);
+        health = dec2bin( health, 6);
     end
 
     % Define IODC
@@ -125,7 +125,7 @@ function word_3 = GenerateWord3( GPS_week_number, health, D_star )
 
     % Pack'em all into a 24-bit number
     word_3_no_parity = ...
-        [ GPS_week_number Code_L2_Flag URA_index sv_health, IODC ];
+        [ GPS_week_number Code_L2_Flag URA_index health, IODC ];
 
     word_3 = GpsParityMaker( 0, word_3_no_parity, D_star ) ;
 end
@@ -277,7 +277,7 @@ IODC_LSB_8_bits = [ 1 0 0 1 1 1 0 1 ];
     word_8 = GpsParityMaker( 0, word_8_no_parity, D_star );
 end
 
-function word_9 = GenerateWord9( D_star )
+function word_9 = GenerateWord9( sv_af1, D_star )
 % ------------------------------------------------------------------------%
 % GenerateWord9() - Generates a 30 bit word containg , SV clock correction
 %   term A_f2 and A_f1 and Parity bits.
@@ -296,15 +296,16 @@ function word_9 = GenerateWord9( D_star )
     %           af0 - 1 thru 22 bits of word 10 - subrame 1
     % NOTE: For this project these bits are set to zero. Meaning...
     %   no correction is needed.
-    clock_correction_a_f2 = [ 0 0 0 0 0 0 0 0];
-    clock_correction_a_f1 = [ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0];
+    a_f2 = [ 0 0 0 0 0 0 0 0];
+    % Get af1 scaled
+    a_f1 = SvData2Binary( sv_af1/( 2^-43 ), 16);
 
-    word_9_no_parity = [clock_correction_a_f2 clock_correction_a_f1 ];
+    word_9_no_parity = [a_f2 a_f1 ];
 
     word_9 = GpsParityMaker( 0, word_9_no_parity, D_star );
 end
 
-function word_10 = GenerateWord10( D_star )
+function word_10 = GenerateWord10( sv_af0, D_star )
 % ------------------------------------------------------------------------%
 % GenerateWord10() - Generates a 30 bit word containg , SV Clock correction
 %   term A_F0, Noninformation bearing bits for Parity comp, and Parity bits.
@@ -323,8 +324,7 @@ function word_10 = GenerateWord10( D_star )
     %           af0 - 1 thru 22 bits of word 10 - subrame 1
     % NOTE: For this project these bits are set to zero. Meaning...
     %   no correction is needed.
-    clock_correction_a_f0 = ...
-        [ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0];
+    a_f0 = SvData2Binary( sv_af0/( 2^-31 ), 22);
 
     word_10_no_parity = clock_correction_a_f0;
 
