@@ -19,17 +19,35 @@ function data = fetchYumaData()
     full_url = strcat( base_url, num2str( day_of_year ), file_type );
     file_name = 'current_almanac';
 
-    try
-        almanac_file = websave( file_name, full_url );
-    catch ME
-        if strcmp( ME.identifier, 'MATLAB:webservices:HTTP404StatusCodeError' )
-            delete *.html *.alm;
-            error('Web service 404 Error. Check website and Day of Year calculation.');
-        else
-            fprintf('%s\n', ME.identifier);
+    % Check Matlab version
+    if verLessThan('matlab', 'R2014b') % Function websave() introduced in R2014b
+       % Try
+       disp('Fetching Yuma Almanac Data...');
+       [ almanac_file, status ] = urlwrite( full_url, strcat(file_name, '.alm' ) );
+       if status == 1
+           disp('Done.')
+       elseif strcmp( status, 'Error using urlreadwrite (line 98)')
+           disp('Matlab does not have the YUMA almanac data website certificate as a trusted keystore.');
+           disp('Go to https://www.mathworks.com/matlabcentral/answers/92506-how-can-i-configure-matlab-to-allow-access-to-self-signed-https-servers for a solution');
+       else
+           fprintf('%s\n', status);
+       end
+    else
+        % If newer than R2015 use websave
+        try
+            almanac_file = websave( file_name, full_url );
+        catch ME
+            if strcmp( ME.identifier, 'MATLAB:webservices:HTTP404StatusCodeError' )
+                delete *.html *.alm;
+                error('Web service 404 Error. Check website and Day of Year calculation.');
+            else
+                fprintf('%s\n', ME.identifier);
+            end
         end
     end
 
+    % If older use urlwrite
+   
     % Get YUMA data
     data = ExtractData( almanac_file );
 
