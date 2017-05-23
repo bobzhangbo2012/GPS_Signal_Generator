@@ -326,7 +326,7 @@ function word_10 = GenerateWord10( sv_af0, D_star )
     %   no correction is needed.
     a_f0 = SvData2Binary( sv_af0/( 2^-31 ), 22);
 
-    word_10_no_parity = clock_correction_a_f0;
+    word_10_no_parity = a_f0;
 
     word_10 = GpsParityMaker( 1, word_10_no_parity, D_star );
 end

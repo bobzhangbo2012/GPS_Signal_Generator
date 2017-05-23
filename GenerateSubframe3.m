@@ -179,7 +179,7 @@ function word_6 = GenerateWord6( i_not, D_star )
     word_6 = GpsParityMaker(0,  word_6_no_parity, D_star );
 end
 
-function word_7 = GenerateWord7( sv_omega, D_star )
+function [ omega word_7 ]= GenerateWord7( sv_omega, D_star )
 % ------------------------------------------------------------------------%
 % GenerateWord7() - Generates a 30 bit word containg C_rc (16-bits) and  omega (8-bits MSB)
 % and Parity bits.
