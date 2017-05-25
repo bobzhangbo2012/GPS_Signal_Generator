@@ -11,7 +11,10 @@ function data = fetchYumaData()
     % Get day of the year
     % Note: calculation of day of the year sometime throws an error
     %   because it increases the current day faster than the website.
-    day_of_year = floor( now - datenum( 2017, 1, 0, 0, 0, 0 ));
+    current_date = clock;
+    year = current_date(1);
+    day_of_year = floor( now - datenum( year, 0, 1, 0, 0, 0 ));
+    fprintf('Today is day number %d of the year %d.\n', day_of_year, year );
 
     % Fetch the data from the website
     base_url = 'https://gps.afspc.af.mil/gps/archive/2017/almanacs/yuma/';
@@ -35,7 +38,9 @@ function data = fetchYumaData()
     else
         % If newer than R2015 use websave
         try
+            disp('Fetching Yuma Almanac Data...');
             almanac_file = websave( file_name, full_url );
+
         catch ME
             if strcmp( ME.identifier, 'MATLAB:webservices:HTTP404StatusCodeError' )
                 delete *.html *.alm;
@@ -46,9 +51,8 @@ function data = fetchYumaData()
         end
     end
 
-    % If older use urlwrite
-   
     % Get YUMA data
+    disp('Done.')
     data = ExtractData( almanac_file );
 
     % Clean up created file
