@@ -6,6 +6,7 @@ function subframe_5_300_bits  = GenerateSubframe5( ...
     %   contains 300 bits, 10 words each 30 bits. The following define each   %
     %   bit content:                                                          %
     %                                                                         %
+    %   Pages 1 - 24:                                                         %
     %       Word 1 - TLM                                                      %
     %       Word 2 - HOW                                                      %
     %       Word 3 - Data ID (2-bits), SV Id (6-bit), e (16-bits)             %
@@ -22,6 +23,9 @@ function subframe_5_300_bits  = GenerateSubframe5( ...
     %         - page_nuber - Subframe 4 and 5 have page numbers               %
     %         - TOW_truncated - 17 MSB of 19 bit time of week                 %
     %         - D_star -  Last two bits of previews word                      %
+    %         - full_almanac_data - All of the Yuma data for given SV         %
+    %         - full_sv_health_data - Health data for ALL SVs                 %
+    %         - GPS_week_number - Current GPS week                            %
     %                                                                         %
     % ----------------------------------------------------------------------- %
     %               Created by Kurt Pedrosa  -- March 03th 2017               %
@@ -175,7 +179,7 @@ function word_5 = GenerateWord5(...
 % --------------------------------------------------------------------------- %
 % GenerateWord5() - Generates a 30 bit word containing:                       %
 %  Pages 1 - 24 -- Rate of Right Ascension (24 bits)                          %
-%  Page 25 -- Satellite health SV 5, 6, 7, and 8                              %                                %
+%  Page 25 -- Satellite health SV 5, 6, 7, and 8                              %
 % --------------------------------------------------------------------------- %
         if page_number < 25
             % Define omega_dot (16-bits)
@@ -212,7 +216,7 @@ function word_6 = GenerateWord6( page_number, sv_sqrt_a, full_sv_health_data, D_
 % --------------------------------------------------------------------------- %
 % GenerateWord3() - Generates a 30 bit word containing:                       %
 %  Pages 1 - 24 -- Square Root of Semi-Major Axis (24 bits)                   %
-%  Page 25 -- Satellite health SV 9, 10 ,11, and 12                           %                               %
+%  Page 25 -- Satellite health SV 9, 10 ,11, and 12                           %
 % --------------------------------------------------------------------------- %
     if page_number < 25
         % Define sqrt_a ( 24 bits )
@@ -247,7 +251,7 @@ function word_7 = GenerateWord7( page_number, full_sv_health_data, D_star )
 % --------------------------------------------------------------------------- %
 % GenerateWord3() - Generates a 30 bit word containing:                       %
 %  Pages 1 - 24 -- Longitude of Ascending Node ( 24 bits )                    %
-%  Page 25 -- Satellite health SV 13, 14, 15, and 16                          %                             %
+%  Page 25 -- Satellite health SV 13, 14, 15, and 16                          %
 % --------------------------------------------------------------------------- %
     if page_number < 25
         % Define omega_not
@@ -279,7 +283,7 @@ function word_8 = GenerateWord8(...
 % --------------------------------------------------------------------------- %
 % GenerateWord3() - Generates a 30 bit word containing:                       %
 %  Pages 1 - 24 --  Argument of Perigee (24 bits)                             %
-%  Page 25 -- Satellite health SV 17, 18, 19, and 20                          %                                %
+%  Page 25 -- Satellite health SV 17, 18, 19, and 20                          %
 % --------------------------------------------------------------------------- %
     if page_number < 25
         omega = SvData2Binary( (sv_omega/pi)/2^-23, 24 );
