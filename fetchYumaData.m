@@ -7,13 +7,13 @@
 % ----------------------------------------------------------------------- %
 %               Created by Kurt Pedrosa  -- May 18th 2017                 %
 % ----------------------------------------------------------------------- %
-function data = fetchYumaData()
+function full_almanac_data = fetchYumaData()
     % Get day of the year
     % Note: calculation of day of the year sometime throws an error
     %   because it increases the current day faster than the website.
     current_date = clock;
     year = current_date(1);
-    day_of_year = floor( now - datenum( year, 0, 1, 0, 0, 0 ));
+    day_of_year = floor( now - datenum( year, 0, 0, 0, 0, 0 ));
     fprintf('Today is day number %d of the year %d.\n', day_of_year, year );
 
     % Fetch the data from the website
@@ -38,7 +38,7 @@ function data = fetchYumaData()
     else
         % If newer than R2015 use websave
         try
-            disp('Fetching Yuma Almanac Data...');
+            disp('Fetching Yuma Almanac data...');
             almanac_file = websave( file_name, full_url );
 
         catch ME
@@ -53,7 +53,41 @@ function data = fetchYumaData()
 
     % Get YUMA data
     disp('Done.')
-    data = ExtractData( almanac_file );
+
+    disp('Checking YUMA data for presence of 32 satellite vehicles.');
+    data_not_formated = ExtractData( almanac_file );
+
+    % Ensure that all 32 SVs are accounted for.
+    % If 32 SVs not present, then create a dummy data for the missing SVs
+    % Dummy date includes decimal values of alternatind one's and zero's
+    dummy_data =...
+    [ 63 0.0208330154418945 696320 1.33333333302289 1.589432940818369e-07 ...
+      5461.3330078125 0 1.33333325386047 1.33333325386047 ...
+      0.00130176544189453 4.96584107168019e-09 ];
+
+    if size( data_not_formated, 1 ) ~= 32
+        numb_of_columns = size( data_not_formated, 2 );
+        data_column_temp = [];
+        for count_columns = 1:numb_of_columns
+            data_column_temp = [ data_column_temp 0 ];
+        end
+        data_temp = [ data_not_formated ; data_column_temp ];
+    end
+
+    for count_index = 1:32
+        find_result = find( data_temp( :, 1 ) == count_index );
+        if isempty( find_result )
+            data_temp =...
+                [ data_temp( 1:count_index-1, :);...
+                [ count_index dummy_data ];...
+                data_temp( count_index:end-1, :) ];
+                count_index = 1;
+        end
+    end
+
+    disp('Done. Almanac data is not available.');
+
+    full_almanac_data = data_temp;
 
     % Clean up created file
     delete *.alm;

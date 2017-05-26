@@ -37,31 +37,18 @@ function message_data = CreateMessageData()
     % Get Almanac Data
     full_almanac_data  = fetchYumaData();
 
-    % Format SV Health array
+    % Get SV Health array. Health value of all SV in Yuma almanac
     full_sv_health_data = full_almanac_data( : , 1:2 );
-    if size( full_sv_health_data, 1 ) ~= 32
-        full_sv_health_data = [ full_sv_health_data ; [ 0 0 ] ];
-    end
-
-    for count_index = 1:32
-        find_result = find( full_sv_health_data( :, 1 ) == count_index );
-        if isempty( find_result )
-            full_sv_health_data =...
-                [ full_sv_health_data( 1:count_index-1, :);...
-                [ count_index 63 ];...
-                full_sv_health_data( count_index:end-1, :) ];
-                count_index = 1;
-        end
-    end
 
     % Selecet a single SV for testing
     selected_sv = 9;
     % Index the selected SV
     index_selected_sv = find( full_almanac_data == selected_sv );
 
-
+    % Create message data
     message_data = [];
     for count_pages = 1:25
+        fprintf('In CreateMessageData() this is page number %d.\n', count_pages );
         if count_pages == 1
             subframe_1 = GenerateSubframe1( ...
                 transmission_week_number,...

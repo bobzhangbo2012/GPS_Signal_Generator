@@ -42,8 +42,8 @@ function subframe_5_300_bits  = GenerateSubframe5( ...
     word_1  = GenerateTLMWord( D_star );
     word_2  = GenerateHOWWord( TOW_truncated, frame_id, word_1( 29:30 ));
     word_3  = GenerateWord3(...
-                page_number, full_almanac_data( 3 ) , full_almanac_data( 4 ),...
-                GPS_week_number, word_2( 29:30 ) );
+                page_number, full_almanac_data( 2 ) , full_almanac_data( 3 ),...
+                full_almanac_data( 4 ), GPS_week_number, word_2( 29:30 ) );
     word_4  = GenerateWord4(...
                 page_number, full_almanac_data( 4 ),...
                 full_sv_health_data( 1:4 ), word_3(29:30) );
@@ -83,7 +83,7 @@ end
 
 
 function word_3 = GenerateWord3( ...
-    page_number, sv_eccentricity, sv_t_oa, GPS_week_number, D_star )
+    page_number, sv_health, sv_eccentricity, sv_t_oa, GPS_week_number, D_star )
 % --------------------------------------------------------------------------- %
 % GenerateWord3() - Generates a 30 bit word containing:                       %
 %  Pages 1 - 24 -- Data ID (2 bits), SV id (6 bits), Eccentricity ( 16 bits ) %
@@ -95,11 +95,16 @@ function word_3 = GenerateWord3( ...
         %   For NAV data data_id must be [ 0 1 ] (2)
         data_id = [ 0 1 ];
         % Define SV_id
-        sv_id = str2bin_array( dec2bin( page_number, 6 ) );
+        % Catch for dummy SV
+        if sv_health == 63
+            sv_id = str2bin_array( dec2bin( 0, 6 ) );
+        else
+            sv_id = str2bin_array( dec2bin( page_number, 6 ) );
+        end
 
         % Define eccentricity
         % Check range
-        if sv_eccentricity < 0.0 || sv_eccentricity > 0.03
+        if (sv_eccentricity < 0.0 || sv_eccentricity > 0.03) && sv_eccentricity ~= 0.0208330154418945
             eccentricity = dec2bin( 0, 16 );
             error( 'Eccentricity value passed is out-of-range. Check Word 3 Subframe 5.' );
         else
@@ -114,10 +119,15 @@ function word_3 = GenerateWord3( ...
         %   For NAV data data_id must be [ 0 1 ] (2)
         data_id = [ 0 1 ];
         % Define SV_id
-        sv_id = str2bin_array( dec2bin( 51, 6 ) );
+        % Catch for dummy SV
+        if sv_health == 63
+            sv_id = str2bin_array( dec2bin( 0, 6 ) );
+        else
+            sv_id = str2bin_array( dec2bin( 51, 6 ) );
+        end
         % Define t_oa (8 bits)
         %Check range
-       if sv_t_oa > 602112  || sv_t_oa < 0
+       if ( sv_t_oa > 602112  || sv_t_oa < 0 ) && sv_t_oa ~= 696320
            t_oa = bin2dec( 0, 8 );
            error('The Time of Applicabitity is out-of-range. Check Word 3 of Subframe 5.');
        else
@@ -138,8 +148,8 @@ function word_4 = GenerateWord4( ...
     page_number, sv_t_oa, full_sv_health_data, D_star )
 % --------------------------------------------------------------------------- %
 % GenerateWord3() - Generates a 30 bit word containing:                       %
-%  Pages 1 - 24 -- Time of Applicabitity (8 bits)%
-%  Page 25 -- Satellite health SV 1, 2, 3, and 4                              %                                %
+%  Pages 1 - 24 -- Time of Applicabitity (8 bits)                               %
+%  Page 25 -- Satellite health SV 1, 2, 3, and 4                              %
 % --------------------------------------------------------------------------- %
     if page_number < 25
         % Define t_oa (8 bits)
