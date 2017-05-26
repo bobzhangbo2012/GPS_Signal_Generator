@@ -358,7 +358,7 @@ function word_10 = GenerateWord10( page_number, sv_a_f0, sv_a_f1, D_star )
         a_f0 = SvData2Binary( sv_a_f0/( 2^-20 ), 11);
         a_f1 = SvData2Binary( sv_a_f1/( 2^-38 ), 11);
 
-        word_10_no_parity = [ a_f0 a_f1 ];
+        word_10_no_parity = [ a_f0(1:8) a_f1 a_f0(9:11) ];
     else
         reserved_system_use = [ 1 0 1 0 1 0 ]; % 6 bits
         reserved = [ 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 ]; % 16 bits
