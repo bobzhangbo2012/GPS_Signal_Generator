@@ -50,7 +50,7 @@ message_signal_bytes = ConvertToBytesAndPad( message_signal );
 repeating_array = message_signal_bytes(:);
 
 % Largest number of bytes that the bram can hold is 262144
-for count_i = 1:1:727
+for count_i = 1:1:51
     repeating_array = [ repeating_array; message_signal_bytes(:) ];
 end
 

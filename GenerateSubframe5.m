@@ -154,7 +154,8 @@ function word_4 = GenerateWord4( ...
     if page_number < 25
         % Define t_oa (8 bits)
         % Check range
-        if  sv_t_oa > 602112 || sv_t_oa < 0
+        if  ( sv_t_oa > 602112 || sv_t_oa < 0 ) && sv_t_oa ~= 696320
+            sv_t_oa
             t_oa = dec2bin( 0, 8 );
             error('The Time of Applicabitity is out-of-range. Check Word 4 of Subframe 5.');
         else
@@ -196,9 +197,9 @@ function word_5 = GenerateWord5(...
             omega_dot_dec = sv_omega_dot/pi;
 
             % Check range
-            if omega_dot_dec < -6.33E-07  || omega_dot_dec > 0
-              omega_dot = bin2dec( 0, 24 );
-                error('The Rate of Right Ascension is out-of-range. Check Word 5 of Subframe 5');
+            if ( omega_dot_dec < -6.33E-07  || omega_dot_dec > 0 ) && omega_dot_dec*pi ~= 4.99335085024861e-07
+              omega_dot = dec2bin( 0, 16 );
+              error('The Rate of Right Ascension is out-of-range. Check Word 5 of Subframe 5');
             else
                 omega_dot = SvData2Binary( omega_dot_dec/ 2^-38, 16 );
             end

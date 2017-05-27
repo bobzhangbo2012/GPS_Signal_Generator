@@ -1,5 +1,5 @@
 function subframe_4_300_bits = GenerateSubframe4(...
-  page_number, TOW_truncated, sv_t_ot, full_sv_health_data,...
+  page_number, TOW_truncated, GPS_week_number, sv_t_ot, full_sv_health_data,...
   full_almanac_data, D_star )
 % ----------------------------------------------------------------------- %
 %  GenerateSubframe4 - Generates the second subframe of a GPS Message. It %
@@ -37,11 +37,11 @@ function subframe_4_300_bits = GenerateSubframe4(...
     word_5 = GenerateWord5( page_number, full_almanac_data, word_4( 29:30 ) );
     word_6 = GenerateWord6( page_number, full_almanac_data, word_5( 29:30 ) );
     word_7 = GenerateWord7( page_number, word_6( 29:30 ) );
-    word_8 = GenerateWord8( page_number, sv_t_ot, full_sv_health_data,...
+    word_8 = GenerateWord8( page_number, sv_t_ot, GPS_week_number, full_sv_health_data( 25 ),...
                 full_almanac_data, word_2( 29:30 ) );
-    word_9 = GenerateWord9( page_number,full_sv_health_data,...
+    word_9 = GenerateWord9( page_number, GPS_week_number, full_sv_health_data( 26:29 ),...
                 full_almanac_data, word_2( 29:30 ) );
-    word_10 = GenerateWord10( page_number,full_sv_health_data,...
+    word_10 = GenerateWord10( page_number,full_sv_health_data( 30:32 ),...
                 full_almanac_data, word_2( 29:30 ) );
 
     % Returns a array of 10 x 30 bits
@@ -65,12 +65,12 @@ function word_3 = GenerateWord3( page_number, full_almanac_data, D_star )
     % GenerateWord3() - Generates a 30 bit word data depending on page number,    %
     %       including parity bits.                                                %
     % --------------------------------------------------------------------------- %
-    if page_number == 2; 3; 4; 5; 7; 8; 9; 10;
+    if any( page_number == [ 2, 3, 4, 5, 7, 8, 9, 10 ] )
       % Polynomial equation that returns a SV index number between 25 and 32
       % for example : Page 2 - sv_indexed= 25
       % This is due to the fact that pages 2, 3, 4, 5, 7, 8, 9, 10 are
       %   ephemeris data for SV 25 thru 32
-      sv_indexed =  ( -1787/181440 ) * page_number^9 + ...
+      sv_indexed =  round( ( -1787/181440 ) * page_number^9 + ...
                     ( 2161/4480 ) * page_number^8 - ...
                     ( 152611/15120 ) *  page_number^7 + ...
                     ( 339491/2880 ) * page_number^6 - ...
@@ -79,12 +79,14 @@ function word_3 = GenerateWord3( page_number, full_almanac_data, D_star )
                     ( 969047939/90720 ) * page_number^3 + ...
                     ( 181025839/10080 ) * page_number^2 - ...
                     ( 40634899/2520 ) * page_number + ...
-                    5789;
+                    5789 );
 
       % Define Data_id
       %   For NAV data data_id must be [ 0 1 ] (2)
       data_id = [ 0 1 ];
       % Define SV_id
+      sv_health = full_almanac_data( sv_indexed, 2 );
+
       % Catch for dummy SV
       if sv_health == 63
           sv_id = str2bin_array( dec2bin( 0, 6 ) );
@@ -107,13 +109,13 @@ function word_3 = GenerateWord3( page_number, full_almanac_data, D_star )
       % Pack'em all into a 24-bit number
       word_3_no_parity = [ data_id sv_id eccentricity ];
 
-    elseif page_number == 1; 6; 11; 16; 21; 12; 19; 20; 22; 23; 24;
+    elseif any( page_number == [ 1, 6, 11, 16, 21, 12, 19, 20, 22, 23, 24 ] )
         % Define Data ID (2 bits)
         data_id = [ 0 1 ];
         % Define Sv ID (6 bits)
-        if page_number == 1; 6; 11; 16; 21;
+        if any( page_number == [ 1, 6, 11, 16, 21 ] )
             sv_id = str2bin_array( dec2bin( 57, 6 ));
-        elseif page_number == 12, 24;
+        elseif any( page_number ==  [ 12, 24 ] )
             sv_id = str2bin_array( dec2bin( 62, 6 ));
         elseif page_number == 19
             % Note (3) - SV ID may cary (expet for IIR/IIR-M/IIF/GPS III SVs)
@@ -128,7 +130,7 @@ function word_3 = GenerateWord3( page_number, full_almanac_data, D_star )
             % Note (3) - SV ID may cary (expet for IIR/IIR-M/IIF/GPS III SVs)
             sv_id = str2bin_array( dec2bin( 61, 6 ));
         else
-            error('Page number error. Check SV ID word 3 Subframe 4.');
+            error('Page number error. Check SV ID word 3 Subframe 4 Page %d.', page_number );
         end
         % Define reserved bits (16 bits)
         reserved = [ 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 ];
@@ -189,7 +191,7 @@ function word_3 = GenerateWord3( page_number, full_almanac_data, D_star )
         % 01 - Encrypted and available only to authorized users (NORMAL MODE)
         % 10 - No data available
         % 11 -  Reserved
-        avail_indicator = [ 0 1 ]
+        avail_indicator = [ 0 1 ];
 
         % Define ERDs
         %   Normal mode these are encrypted. C/A has not access therefor
@@ -202,7 +204,7 @@ function word_3 = GenerateWord3( page_number, full_almanac_data, D_star )
         % Pack'em all into a 24-bit number
         word_3_no_parity =[ data_id sv_id avail_indicator erd1 erd2 erd3 ];
 
-    elseif page_number == 14; 15; 17;
+    elseif any( page_number == [ 14, 15, 17 ] )
         % Define Data id
         data_id = [ 0 1 ];
         % Define sv_id
@@ -248,12 +250,12 @@ function word_4 = GenerateWord4( page_number, full_almanac_data, D_star )
     % GenerateWord4() - Generates a 30 bit word data depending on page number,    %
     %       including parity bits.                                                %
     % --------------------------------------------------------------------------- %
-    if page_number == 2; 3; 4; 5; 7; 8; 9; 10;
+    if any( page_number == [ 2, 3, 4, 5, 7, 8, 9, 10 ] );
       % Polynomial equation that returns a SV index number between 25 and 32
       % for example : Page 2 - sv_indexed= 25
       % This is due to the fact that pages 2, 3, 4, 5, 7, 8, 9, 10 are
       %   ephemeris data for SV 25 thru 32
-      sv_indexed =  ( -1787/181440 ) * page_number^9 + ...
+      sv_indexed =  round( ( -1787/181440 ) * page_number^9 + ...
                     ( 2161/4480 ) * page_number^8 - ...
                     ( 152611/15120 ) *  page_number^7 + ...
                     ( 339491/2880 ) * page_number^6 - ...
@@ -262,9 +264,9 @@ function word_4 = GenerateWord4( page_number, full_almanac_data, D_star )
                     ( 969047939/90720 ) * page_number^3 + ...
                     ( 181025839/10080 ) * page_number^2 - ...
                     ( 40634899/2520 ) * page_number + ...
-                    5789;
+                    5789 );
       % Define t_oa (8 bits)
-      sv_t_oa = full_almanac_data( sv_indexed, 4 )
+      sv_t_oa = full_almanac_data( sv_indexed, 4 );
       % Check range
       if  sv_t_oa > 602112 || sv_t_oa < 0
           t_oa = dec2bin( 0, 8 );
@@ -281,7 +283,7 @@ function word_4 = GenerateWord4( page_number, full_almanac_data, D_star )
       % Pack'em all into a 24-bit number
       word_4_no_parity = [ t_oa delta_i ];
 
-    elseif page_number == 1; 6; 11; 16; 21; 12; 19; 20; 22; 23; 24;
+    elseif any( page_number == [ 1, 6, 11, 16, 21, 12, 19, 20, 22, 23, 24 ] )
         reserved = GenerateReservedWord();
 
         % Pack'em all into a 24-bit number
@@ -295,7 +297,7 @@ function word_4 = GenerateWord4( page_number, full_almanac_data, D_star )
         % Single frequency users will decrese RMS error if delay calulated
         alpha_two = [ 0 0 0 0 0 0 0 0 ]; % 8 bits
         alpha_three = [ 0 0 0 0 0 0 0 0 ]; % 8 bits
-        beta_not = [ 0 0 0 0 0 0 0 0 ]  % 8 bits
+        beta_not = [ 0 0 0 0 0 0 0 0 ];  % 8 bits
 
         % Pack'em all into a 24-bit number
         word_4_no_parity = [ alpha_two alpha_three beta_not ];
@@ -312,7 +314,7 @@ function word_4 = GenerateWord4( page_number, full_almanac_data, D_star )
         % Pack'em all into a 24-bit number
         word_4_no_parity = erd_5_sv;
 
-    elseif page_number == 14; 15; 17;
+    elseif any( page_number == [ 14, 15, 17, ] )
         if page_number == 17
             % Special Message 16 bits
             % For testing, "TH[IS ]IS A TEST" will be sent.
@@ -336,17 +338,17 @@ function word_4 = GenerateWord4( page_number, full_almanac_data, D_star )
     word_4 = GpsParityMaker( 0, word_4_no_parity, D_star );
 end
 
-function word_5 = GenerateWord5( page_number, D_star )
+function word_5 = GenerateWord5( page_number, full_almanac_data, D_star )
     % --------------------------------------------------------------------------- %
     % GenerateWord5() - Generates a 30 bit word data depending on page number,    %
     %       including parity bits.                                                %
     % --------------------------------------------------------------------------- %
-    if page_number == 2; 3; 4; 5; 7; 8; 9; 10;
+    if any( page_number == [ 2, 3, 4, 5, 7, 8, 9, 10 ] );
       % Polynomial equation that returns a SV index number between 25 and 32
       % for example : Page 2 - sv_indexed= 25
       % This is due to the fact that pages 2, 3, 4, 5, 7, 8, 9, 10 are
       %   ephemeris data for SV 25 thru 32
-      sv_indexed =  ( -1787/181440 ) * page_number^9 + ...
+      sv_indexed =  round( ( -1787/181440 ) * page_number^9 + ...
                     ( 2161/4480 ) * page_number^8 - ...
                     ( 152611/15120 ) *  page_number^7 + ...
                     ( 339491/2880 ) * page_number^6 - ...
@@ -355,25 +357,24 @@ function word_5 = GenerateWord5( page_number, D_star )
                     ( 969047939/90720 ) * page_number^3 + ...
                     ( 181025839/10080 ) * page_number^2 - ...
                     ( 40634899/2520 ) * page_number + ...
-                    5789;
-
+                    5789 );
       % Define omega_dot (16-bits)
       omega_dot_dec = full_almanac_data( sv_indexed, 6 )/pi;
 
       % Check range
-      if omega_dot_dec < -6.33E-07  || omega_dot_dec > 0
+      if ( omega_dot_dec < -6.33E-07  || omega_dot_dec > 0 ) && omega_dot_dec*pi ~= 4.99335085024861e-07
         omega_dot = bin2dec( 0, 24 );
-          error('The Rate of Right Ascension is out-of-range. Check Word 5 of Subframe 4');
+        error('The Rate of Right Ascension is out-of-range. Check Word 5 of Subframe 4');
       else
-          omega_dot = SvData2Binary( omega_dot_dec/ 2^-38, 16 );
+        omega_dot = SvData2Binary( omega_dot_dec/ 2^-38, 16 );
       end
       % Define SV Health
-      health = SvData2Binary( sv_health, 8 );
+      health = SvData2Binary( full_almanac_data( sv_indexed, 2), 8 );
 
       % Pack'em all into a 24-bit number
       word_5_no_parity = [ omega_dot health ];
 
-    elseif page_number == 1; 6; 11; 16; 21; 12; 19; 20; 22; 23; 24;
+    elseif any( page_number == [ 1, 6, 11, 16, 21, 12, 19, 20, 22, 23, 24 ] )
         reserved = GenerateReservedWord();
 
         % Pack'em all into a 24-bit number
@@ -387,7 +388,7 @@ function word_5 = GenerateWord5( page_number, D_star )
         % Single frequency users will decrese RMS error if delay calulated
         beta_one = [ 0 0 0 0 0 0 0 0 ]; % 8 bits
         beta_two = [ 0 0 0 0 0 0 0 0 ]; % 8 bits
-        beta_three = [ 0 0 0 0 0 0 0 0 ]  % 8 bits
+        beta_three = [ 0 0 0 0 0 0 0 0 ];  % 8 bits
 
         % Pack'em all into a 24-bit number
         word_5_no_parity = [ beta_one beta_two beta_three ];
@@ -404,7 +405,7 @@ function word_5 = GenerateWord5( page_number, D_star )
         % Pack'em all into a 24-bit number
         word_5_no_parity = erd_5_sv;
 
-    elseif page_number == 14; 15; 17;
+elseif any( page_number == [ 14, 15, 17 ] )
         if page_number == 17
             % Special Message 16 bits
             % For testing, "THIS [IS ]A TEST" will be sent.
@@ -428,17 +429,17 @@ function word_5 = GenerateWord5( page_number, D_star )
     word_5 = GpsParityMaker( 0, word_5_no_parity, D_star );
 end
 
-function word_6 = GenerateWord6( page_number, D_star )
+function word_6 = GenerateWord6( page_number, full_almanac_data, D_star )
     % --------------------------------------------------------------------------- %
     % GenerateWord6() - Generates a 30 bit word data dependisv_sqrt_ang on page number,    %
     %       including parity bits.                                                %
     % --------------------------------------------------------------------------- %
-    if page_number == 2; 3; 4; 5; 7; 8; 9; 10;
+    if any( page_number == [ 2, 3, 4, 5, 7, 8, 9, 10 ] );
       % Polynomial equation that returns a SV index number between 25 and 32
       % for example : Page 2 - sv_indexed= 25
       % This is due to the fact that pages 2, 3, 4, 5, 7, 8, 9, 10 are
       %   ephemeris data for SV 25 thru 32
-      sv_indexed =  ( -1787/181440 ) * page_number^9 + ...
+      sv_indexed =  round( ( -1787/181440 ) * page_number^9 + ...
                     ( 2161/4480 ) * page_number^8 - ...
                     ( 152611/15120 ) *  page_number^7 + ...
                     ( 339491/2880 ) * page_number^6 - ...
@@ -447,7 +448,7 @@ function word_6 = GenerateWord6( page_number, D_star )
                     ( 969047939/90720 ) * page_number^3 + ...
                     ( 181025839/10080 ) * page_number^2 - ...
                     ( 40634899/2520 ) * page_number + ...
-                    5789;
+                    5789 );
       % Define sqrt_a ( 24 bits )
       % Check range
       sqrt_a_dec = full_almanac_data( sv_indexed, 7 );
@@ -462,7 +463,7 @@ function word_6 = GenerateWord6( page_number, D_star )
       % Pack'em all into a 24-bit number
       word_6_no_parity = sqrt_a;
 
-    elseif page_number == 1; 6; 11; 16; 21; 12; 19; 20; 22; 23; 24;
+    elseif any( page_number == [ 1, 6, 11, 16, 21, 12, 19, 20, 22, 23, 24 ] )
         reserved = GenerateReservedWord();
 
         % Pack'em all into a 24-bit number
@@ -473,17 +474,14 @@ function word_6 = GenerateWord6( page_number, D_star )
         % Drift coefficient of GPS time scale relative to UTC time Scale
         A_1 = [ 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ];
 
-        % Pack'em all into a 24-bit number
+         % Pack'em all into a 24-bit number
+        word_6_no_parity = A_1;
+        
     elseif page_number == 13
         erd_5_sv = GenerateERDWord();
 
         % Pack'em all into a 24-bit number
         word_6_no_parity = erd_5_sv;
-
-    elseif page_number == 14; 15; 17;
-        if page_number == 17
-            % Special Message 16 bits
-        word_6_no_parity = A_1;
 
     elseif page_number == 25
         anti_spoof_6_sv = GenerateAntiSpoofWord();
@@ -497,7 +495,7 @@ function word_6 = GenerateWord6( page_number, D_star )
         % Pack'em all into a 24-bit number
         word_6_no_parity = erd_5_sv;
 
-    elseif page_number == 14; 15; 17;
+    elseif any( page_number == [ 14, 15, 17 ] )
         if page_number == 17
             % Special Message 16 bits
             % For testing, "THIS IS [A T]EST" will be sent.
@@ -526,7 +524,7 @@ function word_7 = GenerateWord7( page_number, D_star )
     % GenerateWord7() - Generates a 30 bit word data depending on page number,    %
     %       including parity bits.                                                %
     % --------------------------------------------------------------------------- %
-    if page_number == 2; 3; 4; 5; 7; 8; 9; 10;
+    if any( page_number == [ 2, 3, 4, 5, 7, 8, 9, 10 ] );
       % Define omega_not
       % omega_not is the Longitude of Ascending Node of Orbit Plane at Weekly Epoch
       % omega_not is 24-bit
@@ -537,7 +535,7 @@ function word_7 = GenerateWord7( page_number, D_star )
 
       word_7_no_parity = omega_not;
 
-    elseif page_number == 1; 6; 11; 16; 21; 12; 19; 20; 22; 23; 24;
+    elseif any( page_number == [ 1, 6, 11, 16, 21, 12, 19, 20, 22, 23, 24 ] )
         reserved = GenerateReservedWord();
 
         % Pack'em all into a 24-bit number
@@ -564,7 +562,7 @@ function word_7 = GenerateWord7( page_number, D_star )
         % Pack'em all into a 24-bit number
         word_7_no_parity = erd_5_sv;
 
-    elseif page_number == 14; 15; 17;
+    elseif any( page_number == [ 14, 15, 17 ] )
         if page_number == 17
             % Special Message 16 bits
             % For testing, "THIS IS A T[EST]" will be sent.
@@ -589,17 +587,17 @@ function word_7 = GenerateWord7( page_number, D_star )
 end
 
 function word_8 = GenerateWord8(...
-    page_number,sv_t_ot, full_sv_health_data, D_star )
+    page_number, sv_t_ot, GPS_week_number, full_sv_health_data, full_almanac_data, D_star )
     % --------------------------------------------------------------------------- %
     % GenerateWord8() - Generates a 30 bit word data depending on page number,    %
     %       including parity bits.                                                %
     % --------------------------------------------------------------------------- %
-    if page_number == 2; 3; 4; 5; 7; 8; 9; 10;
+    if any( page_number == [ 2, 3, 4, 5, 7, 8, 9, 10 ] );
       % Polynomial equation that returns a SV index number between 25 and 32
       % for example : Page 2 - sv_indexed= 25
       % This is due to the fact that pages 2, 3, 4, 5, 7, 8, 9, 10 are
       %   ephemeris data for SV 25 thru 32
-      sv_indexed =  ( -1787/181440 ) * page_number^9 + ...
+      sv_indexed =  round( ( -1787/181440 ) * page_number^9 + ...
                     ( 2161/4480 ) * page_number^8 - ...
                     ( 152611/15120 ) *  page_number^7 + ...
                     ( 339491/2880 ) * page_number^6 - ...
@@ -608,13 +606,13 @@ function word_8 = GenerateWord8(...
                     ( 969047939/90720 ) * page_number^3 + ...
                     ( 181025839/10080 ) * page_number^2 - ...
                     ( 40634899/2520 ) * page_number + ...
-                    5789;
+                    5789 );
       omega = SvData2Binary(( ...
         full_almanac_data( sv_indexed, 9 )/pi)/2^-23, 24 );
 
       word_8_no_parity = omega;
 
-    elseif page_number == 1; 6; 11; 16; 21; 12; 19; 20; 22; 23; 24;
+    elseif any( page_number == [ 1, 6, 11, 16, 21, 12, 19, 20, 22, 23, 24 ] )
         reserved = GenerateReservedWord();
 
         % Pack'em all into a 24-bit number
@@ -635,7 +633,7 @@ function word_8 = GenerateWord8(...
             t_ot = SvData2Binary( sv_t_ot/ 2^12, 8 );
         end
         % Define WN_t - UTC reference week number
-        WN_t = str2bin_array( dec2bin( mod( GPS_week_number, 256 ), 8 ))
+        WN_t = str2bin_array( dec2bin( mod( GPS_week_number, 256 ), 8 ));
 
         % Pack'em all into a 24-bit number
         word_8_no_parity = [ A_not t_ot WN_t ];
@@ -660,7 +658,7 @@ function word_8 = GenerateWord8(...
         % Pack'em all into a 24-bit number
         word_8_no_parity = erd_5_sv;
 
-    elseif page_number == 14; 15; 17;
+    elseif any( page_number == [ 14, 15, 17 ] )
         if page_number == 17
             % Special Message 16 bits
             % For testing, "THIS IS A TEST" will be sent.
@@ -683,17 +681,17 @@ function word_8 = GenerateWord8(...
 end
 
 function word_9 = GenerateWord9(...
-    page_number, full_sv_health_data, D_star )
+    page_number, GPS_week_number, full_sv_health_data, full_almanac_data, D_star )
     % --------------------------------------------------------------------------- %
     % GenerateWord9() - Generates a 30 bit word data depending on page number,    %
     %       including parity bits.                                                %
     % --------------------------------------------------------------------------- %
-    if page_number == 2; 3; 4; 5; 7; 8; 9; 10;
+    if any( page_number == [ 2, 3, 4, 5, 7, 8, 9, 10 ] );
       % Polynomial equation that returns a SV index number between 25 and 32
       % for example : Page 2 - sv_indexed= 25
       % This is due to the fact that pages 2, 3, 4, 5, 7, 8, 9, 10 are
       %   ephemeris data for SV 25 thru 32
-      sv_indexed =  ( -1787/181440 ) * page_number^9 + ...
+      sv_indexed =  round( ( -1787/181440 ) * page_number^9 + ...
                     ( 2161/4480 ) * page_number^8 - ...
                     ( 152611/15120 ) *  page_number^7 + ...
                     ( 339491/2880 ) * page_number^6 - ...
@@ -702,7 +700,7 @@ function word_9 = GenerateWord9(...
                     ( 969047939/90720 ) * page_number^3 + ...
                     ( 181025839/10080 ) * page_number^2 - ...
                     ( 40634899/2520 ) * page_number + ...
-                    5789;
+                    5789 );
       % Define M_not
       %   M_not is the Mean Anomaly at Reference Time
       %   M_not has 32 bits ( 8-bits in word 4 of Subframe 2 )
@@ -717,7 +715,7 @@ function word_9 = GenerateWord9(...
 
       word_9_no_parity = M_not;
 
-    elseif page_number == 1; 6; 11; 16; 21; 12; 19; 20; 22; 23; 24;
+    elseif any( page_number == [ 1, 6, 11, 16, 21, 12, 19, 20, 22, 23, 24 ] )
         reserved_8_bits = [ 1 0 1 0 1 0 1 0 ];
         reserved_16_bits = [ 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 ];
 
@@ -767,7 +765,7 @@ function word_9 = GenerateWord9(...
         % Pack'em all into a 24-bit number
         word_9_no_parity = erd_5_sv;
 
-    elseif page_number == 14; 15; 17;
+    elseif any( page_number == [ 14, 15, 17 ] )
         if page_number == 17
             % Special Message 16 bits
             % For testing, "THIS IS A TEST" will be sent.
@@ -790,17 +788,17 @@ function word_9 = GenerateWord9(...
 end
 
 function word_10 = GenerateWord10(...
-    page_number, full_sv_health_data, D_star )
+    page_number, full_sv_health_data, full_almanac_data, D_star )
     % --------------------------------------------------------------------------- %
     % GenerateWord9() - Generates a 30 bit word data depending on page number,    %
     %       including parity bits.                                                %
     % --------------------------------------------------------------------------- %
-    if page_number == 2; 3; 4; 5; 7; 8; 9; 10;
+    if any( page_number == [ 2, 3, 4, 5, 7, 8, 9, 10 ] );
       % Polynomial equation that returns a SV index number between 25 and 32
       % for example : Page 2 - sv_indexed= 25
       % This is due to the fact that pages 2, 3, 4, 5, 7, 8, 9, 10 are
       %   ephemeris data for SV 25 thru 32
-      sv_indexed =  ( -1787/181440 ) * page_number^9 + ...
+      sv_indexed =  round( ( -1787/181440 ) * page_number^9 + ...
                     ( 2161/4480 ) * page_number^8 - ...
                     ( 152611/15120 ) *  page_number^7 + ...
                     ( 339491/2880 ) * page_number^6 - ...
@@ -809,14 +807,14 @@ function word_10 = GenerateWord10(...
                     ( 969047939/90720 ) * page_number^3 + ...
                     ( 181025839/10080 ) * page_number^2 - ...
                     ( 40634899/2520 ) * page_number + ...
-                    5789;
+                    5789 );
 
       a_f0 = SvData2Binary( full_almanac_data( sv_indexed, 11 )/( 2^-20 ), 11);
       a_f1 = SvData2Binary( full_almanac_data( sv_indexed, 12 )/( 2^-38 ), 11);
 
       word_10_no_parity = [ a_f0(1:8) a_f1 a_f0(9:11) ];
 
-    elseif page_number == 1; 6; 11; 16; 21; 12; 19; 20; 22; 23; 24;
+    elseif any( page_number == [ 1, 6, 11, 16, 21, 12, 19, 20, 22, 23, 24 ] )
         reserved = [ 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 ]; % 22 bits
 
         % Pack'em all into a 24-bit number
@@ -831,7 +829,7 @@ function word_10 = GenerateWord10(...
         reserved_system_use = [ 1 0 1 0 1 0 1 0 1 0 1 0 1 0 ];
 
         % Pack'em all into a 24-bit number
-        word_10_no_parity = [ delta_t_LSF reserved_system_use DN ];
+        word_10_no_parity = [ delta_t_LSF reserved_system_use ];
 
     elseif page_number == 25
 
@@ -851,7 +849,7 @@ function word_10 = GenerateWord10(...
         % Pack'em all into a 24-bit number
         word_10_no_parity = erd_5_sv( 1:22 );
 
-    elseif page_number == 14; 15; 17;
+    elseif any( page_number == [ 14, 15, 17 ] )
             reserved_system_use = [ 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 ];
 
             % Pack'em all into a 24-bit number
