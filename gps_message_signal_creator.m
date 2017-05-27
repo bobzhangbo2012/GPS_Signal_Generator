@@ -19,7 +19,7 @@ roach_connected = 0;
 while ~roach_connected
     try
         % Define which firmware to upload
-        fw = 'gps_full_signal_2017_May_17_1732.bof'; % .bof file
+        fw = 'gps_full_signal_2017_May_22_1841.bof'; % .bof file
 
         rhost = '192.168.4.117'; % IP Address for roach being used
 
@@ -50,7 +50,7 @@ message_signal_bytes = ConvertToBytesAndPad( message_signal );
 repeating_array = message_signal_bytes(:);
 
 % Largest number of bytes that the bram can hold is 262144
-for count_i = 1:1:39
+for count_i = 1:1:727
     repeating_array = [ repeating_array; message_signal_bytes(:) ];
 end
 
@@ -58,7 +58,7 @@ end
 selected_bit_sv1 = SelectSatellite(2);
 selected_bit_sv2 = SelectSatellite(4);
 selected_bit_sv3 = SelectSatellite(6);
-selected_bit_sv4 = SelectSatellite(8);
+selected_bit_sv4 = SelectSatellite(9);
 % Write to Selector Bit registers
 wordwrite( roach, 'G2_1_SV_SEL_SEL_REG1', selected_bit_sv1(1,1) );
 wordwrite( roach, 'G2_1_SV_SEL_SEL_REG2', selected_bit_sv1(1,2) );
@@ -77,11 +77,11 @@ wordwrite( roach, 'G2_4_SV_SEL_SEL_REG2', selected_bit_sv4(1,2) );
 %   zero ( 0 ) or the PRN signal ouput.
 % PRN_SHUTDOWN_SWITCH = 0 = PRN is ON
 % PRN_SHUTDOWN_SWITCH = 1 = PRN is OFF
-pause( global_pause ); wordwrite( roach, 'PRN_SHUTDOWN_SWITCH' , 0);
+pause( global_pause ); wordwrite( roach, 'PRN_SHUTDOWN_SWITCH' , 1);
 
 % MESSAGE_SHUTDOWN_SWITCH = 0 = MESSAGE DATA ON
 % MESSAGE_SHUTDOWN_SWITCH = 1 = MESSAGE DATA OFF
-pause( global_pause ); wordwrite( roach, 'MESSAGE_SHUTDOWN_SWITCH2', 0);
+pause( global_pause ); wordwrite( roach, 'MESSAGE_SHUTDOWN_SWITCH2', 1);
 
 % MESSAGE_CLK_SELECT = 0 = CLK PRN CLOCK (1.023 MHZ)
 % MESSAGE_CLK_SELECT = 1 = MESSAGE CLK (50 bps)

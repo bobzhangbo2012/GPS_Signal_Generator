@@ -23,24 +23,22 @@ function full_almanac_data = fetchYumaData()
     file_name = 'current_almanac';
 
     % Check Matlab version
-    if verLessThan('matlab', 'R2014b') % Function websave() introduced in R2014b
+    if verLessThan('matlab', '15.0.1') % Function websave() introduced in R2014b
        % Try
-       disp('Fetching Yuma Almanac Data...');
-       [ almanac_file, status ] = urlwrite( full_url, strcat(file_name, '.alm' ) );
-       if status == 1
-           disp('Done.')
-       elseif strcmp( status, 'Error using urlreadwrite (line 98)')
-           disp('Matlab does not have the YUMA almanac data website certificate as a trusted keystore.');
-           disp('Go to https://www.mathworks.com/matlabcentral/answers/92506-how-can-i-configure-matlab-to-allow-access-to-self-signed-https-servers for a solution');
-       else
-           fprintf('%s\n', status);
+       try
+        disp('Fetching Yuma Almanac Data...');
+        almanac_file = urlwrite( full_url,  strcat(file_name, '.alm' ) );
+       catch ME
+           if strcmp( ME.identifier, 'MATLAB:urlwrite:ConnectionFailed')
+                disp('Matlab does not have the YUMA almanac data website certificate as a trusted keystore.');
+                disp('Go to https://www.mathworks.com/matlabcentral/answers/92506-how-can-i-configure-matlab-to-allow-access-to-self-signed-https-servers for a solution');
+           end
        end
     else
         % If newer than R2015 use websave
-        try
+        try        
             disp('Fetching Yuma Almanac data...');
             almanac_file = websave( file_name, full_url );
-
         catch ME
             if strcmp( ME.identifier, 'MATLAB:webservices:HTTP404StatusCodeError' )
                 delete *.html *.alm;
