@@ -742,7 +742,8 @@ function word_9 = GenerateWord9(...
         %   shall be a modulo 256 bin representation of the GPS week number
         %   to wich the DN is referenced. Paragraph 20.3.3.5.2.4
         % Range 1 - 7  Day
-        DN_dec = weekday( datetime( 'today' ) );
+        %DN_dec = weekday( datetime( 'today' ) ); % ook at date string
+        DN_dec = 1;
         DN = str2bin_array( dec2bin( DN_dec, 8 ) );
 
 

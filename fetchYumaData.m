@@ -31,7 +31,7 @@ function full_almanac_data = fetchYumaData()
        catch ME
            if strcmp( ME.identifier, 'MATLAB:urlwrite:ConnectionFailed')
                 disp('Matlab does not have the YUMA almanac data website certificate as a trusted keystore.');
-                disp('Go to https://www.mathworks.com/matlabcentral/answers/92506-how-can-i-configure-matlab-to-allow-access-to-self-signed-https-servers for a solution');
+                error('Go to https://www.mathworks.com/matlabcentral/answers/92506-how-can-i-configure-matlab-to-allow-access-to-self-signed-https-servers for a solution');
            end
        end
     else
@@ -52,6 +52,7 @@ function full_almanac_data = fetchYumaData()
     % Get YUMA data
     disp('Done.')
 
+    
     disp('Checking YUMA data for presence of 32 satellite vehicles.');
     data_not_formated = ExtractData( almanac_file );
 
