@@ -13,83 +13,135 @@ function full_almanac_data = fetchYumaData()
     %   because it increases the current day faster than the website.
     current_date = clock;
     year = current_date(1);
-    day_of_year = floor( now - datenum( year, 0, 0, 0, 0, 0 ));
-    fprintf('Today is day number %d of the year %d.\n', day_of_year, year );
+    day_of_year = floor( now - datenum( year, 1, 0, 0, 0, 0 )) - 1;
+    fprintf('Today is day number %d of the year %d.\n',  day_of_year, year );
+    % print a empty line for spacing
+    fprintf('\n');
 
     % Fetch the data from the website
     base_url = 'https://gps.afspc.af.mil/gps/archive/2017/almanacs/yuma/';
     file_type = '.alm';
     full_url = strcat( base_url, num2str( day_of_year ), file_type );
-    file_name = 'current_almanac';
+    file_name = strcat( 'almanac_for_day_', num2str( day_of_year ), file_type );
 
-    % Check Matlab version
-    if verLessThan('matlab', '15.0.1') % Function websave() introduced in R2014b
-       % Try
-       try
-        disp('Fetching Yuma Almanac Data...');
-        almanac_file = urlwrite( full_url,  strcat(file_name, '.alm' ) );
-       catch ME
-           if strcmp( ME.identifier, 'MATLAB:urlwrite:ConnectionFailed')
-                disp('Matlab does not have the YUMA almanac data website certificate as a trusted keystore.');
-                error('Go to https://www.mathworks.com/matlabcentral/answers/92506-how-can-i-configure-matlab-to-allow-access-to-self-signed-https-servers for a solution');
+    if exist( file_name, 'file') == 0
+        % Check Matlab version
+        if verLessThan('matlab', '8.0.1') % Function websave() introduced in R2014b
+           % Try
+           try
+            disp('Fetching Yuma Almanac Data...');
+            % print a empty line for spacing
+            fprintf('\n');
+
+            urlwrite( full_url, file_name );
+           catch ME
+               if strcmp( ME.identifier, 'MATLAB:urlwrite:ConnectionFailed')
+                    disp('Matlab does not have the YUMA almanac data website certificate as a trusted keystore.');
+                    error('Go to https://www.mathworks.com/matlabcentral/answers/92506-how-can-i-configure-matlab-to-allow-access-to-self-signed-https-servers for a solution');
+               else
+                   fprintf('%s\n', ME.identifier );
+               end
            end
-       end
-    else
-        % If newer than R2015 use websave
-        try        
-            disp('Fetching Yuma Almanac data...');
-            almanac_file = websave( file_name, full_url );
-        catch ME
-            if strcmp( ME.identifier, 'MATLAB:webservices:HTTP404StatusCodeError' )
-                delete *.html *.alm;
-                error('Web service 404 Error. Check website and Day of Year calculation.');
-            else
-                fprintf('%s\n', ME.identifier);
+        else
+            % If newer than R2015 use websave
+            try
+                disp('Fetching Yuma Almanac data...');
+                % print a empty line for spacing
+                fprintf('\n');
+
+                websave( file_name, full_url );
+            catch ME
+                if strcmp( ME.identifier, 'MATLAB:webservices:HTTP404StatusCodeError' )
+                    delete *.html *.alm;
+                    error('Web service 404 Error. Check website and Day of Year calculation.');
+                else
+                    fprintf('%s\n', ME.identifier);
+                end
             end
         end
-    end
 
-    % Get YUMA data
-    disp('Done.')
+        disp('Checking YUMA data for presence of 32 satellite vehicles.');
+        % print a empty line for spacing
+        fprintf('\n');
 
-    
-    disp('Checking YUMA data for presence of 32 satellite vehicles.');
-    data_not_formated = ExtractData( almanac_file );
+        data_not_formated = ExtractData( file_name );
 
-    % Ensure that all 32 SVs are accounted for.
-    % If 32 SVs not present, then create a dummy data for the missing SVs
-    % Dummy date includes decimal values of alternatind one's and zero's
-    dummy_data =...
-    [ 63 0.0208330154418945 696320 4.18879020381111 4.99335085024861e-07 ...
-      5461.3330078125 0 4.18878995511504 4.18878995511504 ...
-      0.00130176544189453 4.96584107168019e-09 ];
+        % Ensure that all 32 SVs are accounted for.
+        % If 32 SVs not present, then create a dummy data for the missing SVs
+        % Dummy date includes decimal values of alternatind one's and zero's
+        dummy_data =...
+        [ 63 0.0208330154418945 696320 4.18879020381111 4.99335085024861e-07 ...
+          5461.3330078125 0 4.18878995511504 4.18878995511504 ...
+          0.00130176544189453 4.96584107168019e-09 ];
 
-    if size( data_not_formated, 1 ) ~= 32
-        numb_of_columns = size( data_not_formated, 2 );
-        data_column_temp = [];
-        for count_columns = 1:numb_of_columns
-            data_column_temp = [ data_column_temp 0 ];
+        if size( data_not_formated, 1 ) ~= 32
+            numb_of_columns = size( data_not_formated, 2 );
+            data_column_temp = [];
+            for count_columns = 1:numb_of_columns
+                data_column_temp = [ data_column_temp 0 ];
+            end
+            data_temp = [ data_not_formated ; data_column_temp ];
         end
-        data_temp = [ data_not_formated ; data_column_temp ];
-    end
 
-    for count_index = 1:32
-        find_result = find( data_temp( :, 1 ) == count_index );
-        if isempty( find_result )
-            data_temp =...
-                [ data_temp( 1:count_index-1, :);...
-                [ count_index dummy_data ];...
-                data_temp( count_index:end-1, :) ];
-                count_index = 1;
+        for count_index = 1:32
+            find_result = find( data_temp( :, 1 ) == count_index );
+            if isempty( find_result )
+                data_temp =...
+                    [ data_temp( 1:count_index-1, :);...
+                    [ count_index dummy_data ];...
+                    data_temp( count_index:end-1, :) ];
+                    count_index = 1;
+            end
         end
+
+        disp('Done. Almanac data is now available.');
+        % print a empty line for spacing
+        fprintf('\n');
+
+        full_almanac_data = data_temp;
+
+    elseif exist( file_name , 'file' ) == 2
+        disp('Checking YUMA data for presence of 32 satellite vehicles.');
+        % print a empty line for spacing
+        fprintf('\n');
+        data_not_formated = ExtractData( file_name );
+
+        % Ensure that all 32 SVs are accounted for.
+        % If 32 SVs not present, then create a dummy data for the missing SVs
+        % Dummy date includes decimal values of alternatind one's and zero's
+        dummy_data =...
+        [ 63 0.0208330154418945 696320 4.18879020381111 4.99335085024861e-07 ...
+          5461.3330078125 0 4.18878995511504 4.18878995511504 ...
+          0.00130176544189453 4.96584107168019e-09 ];
+
+        if size( data_not_formated, 1 ) ~= 32
+            numb_of_columns = size( data_not_formated, 2 );
+            data_column_temp = [];
+            for count_columns = 1:numb_of_columns
+                data_column_temp = [ data_column_temp 0 ];
+            end
+            data_temp = [ data_not_formated ; data_column_temp ];
+        end
+
+        for count_index = 1:32
+            find_result = find( data_temp( :, 1 ) == count_index );
+            if isempty( find_result )
+                data_temp =...
+                    [ data_temp( 1:count_index-1, :);...
+                    [ count_index dummy_data ];...
+                    data_temp( count_index:end-1, :) ];
+                    count_index = 1;
+            end
+        end
+
+        disp('Done. Almanac data is now available.');
+        % print a empty line for spacing
+        fprintf('\n');
+
+        full_almanac_data = data_temp;
+    else
+        error('Check fetchYumaData() for error. Almanac file existance is not defined.');
     end
-
-    disp('Done. Almanac data is not available.');
-
-    full_almanac_data = data_temp;
-
-    % Clean up created file
-    delete *.alm;
 end
 
 % ----------------------------------------------------------------------- %

@@ -4,8 +4,8 @@ function selected_bits = SelectSatellite( SV_number )
 %  that refeers to the bit position of register G2. The bits selected     %
 %  will be passed to registered that contol MUXes to select the specific  %
 %  position. For example, to select Satelite Vehicle 9 pass the SV_number %
-%  9 and expect the tap_bits to be 3 and 10.                              %      
-%                                                                         %  
+%  9 and expect the tap_bits to be 3 and 10.                              %
+%                                                                         %
 %       Input:  SV_number: The satellite vehicle to select                %
 %                                                                         %
 %       Output: selected_bits:  The two integers for the positon of the   %
@@ -18,7 +18,7 @@ function selected_bits = SelectSatellite( SV_number )
     % PRN signals)
     if (SV_number <= 37) && (SV_number > 0)
 
-        % Define the possible selected patterns    
+        % Define the possible selected patterns
         tap_bits = [ 2 6;
                      3 7;
                      4 8;
@@ -56,14 +56,15 @@ function selected_bits = SelectSatellite( SV_number )
                      1 7;
                      2 8;
                      4 10];
-        
+
         selected_bits = tap_bits( SV_number, :);
-        
+
         fprintf('Satellite Selected was %i.\n', SV_number );
         fprintf('The bits for Satellite %i are %i, %i.\n', SV_number, selected_bits(1,1), selected_bits(1,2));
-             
+        % print a empty line for spacing
+        fprintf('\n');
+
     else
         error('Selected SV number is out of range.')
     end
 end
-

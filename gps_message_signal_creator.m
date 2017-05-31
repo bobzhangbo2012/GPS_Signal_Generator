@@ -58,10 +58,11 @@ selected_bit_sv3 = SelectSatellite( sv_3 );
 selected_bit_sv4 = SelectSatellite( sv_4 );
 
 % Create Message Data
-message_signal_sv1 = CreateMessageData( sv_1 );
-message_signal_sv2 = CreateMessageData( sv_2 );
-message_signal_sv3 = CreateMessageData( sv_3 );
-message_signal_sv4 = CreateMessageData( sv_4 );
+message_signal = CreateMessageData( [ sv_1 sv_2 sv_3 sv_4 ] );
+message_signal_sv1 = message_signal( 1:1250 , : );
+message_signal_sv2 = message_signal( 1251:2500 , : );
+message_signal_sv3 = message_signal( 2501:3750 , : );
+message_signal_sv4 = message_signal( 3751:5000 , : );
 
 message_signal_bytes_1 = ConvertToBytesAndPad( message_signal_sv1 );
 repeated_message_signal_bytes_sv1 = message_signal_bytes_1(:);
@@ -83,7 +84,8 @@ for count_i = 1:1:51
     repeated_message_signal_bytes_sv4 = [ repeated_message_signal_bytes_sv4 ; message_signal_bytes_4(:) ];
 end
 
-
+% Clean up created file
+delete *.alm;
 
 % Write to Selector Bit registers
 wordwrite( roach, 'G2_1_SV_SEL_SEL_REG1', selected_bit_sv1(1,1) - 1 );
