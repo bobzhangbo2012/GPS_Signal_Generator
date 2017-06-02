@@ -103,7 +103,7 @@ function word_3 = GenerateWord3( GPS_week_number, sv_health, D_star )
     if sv_health == 0
         health = [ 0 0 0 0 0 0 ];
     else
-        health = dec2bin( health, 6);
+        health = dec2bin( sv_health, 6);
     end
 
     % Define IODC
