@@ -47,7 +47,7 @@ end
 fprintf('\n');
 
 % Select the SV
-sv_1 = 9;
+sv_1 = 4;
 sv_2 = 20;
 sv_3 = 30;
 sv_4 = 15;
@@ -105,7 +105,7 @@ pause( global_pause );wordwrite( roach, 'G2_4_SV_SEL_REG2', (selected_bit_sv4(1,
 %   zero ( 0 ) or the PRN signal ouput.
 % PRN_SHUTDOWN_SWITCH = 0 = PRN is ON
 % PRN_SHUTDOWN_SWITCH = 1 = PRN is OFF
-pause( global_pause );wordwrite( roach, 'PRN_SHUTDOWN_SWITCH' , 0);
+pause( global_pause );wordwrite( roach, 'PRN_SHUTDOWN_SWITCH' , 1);
 
 % MESSAGE_SHUTDOWN_SWITCH = 0 = MESSAGE DATA ON
 % MESSAGE_SHUTDOWN_SWITCH = 1 = MESSAGE DATA OFF
@@ -129,8 +129,8 @@ pause( global_pause );wordwrite( roach, 'Message_Signal4_BRAM_DELAY_REG', 0 );
 %       1 = SV1, OFF -- SV2, ON
 %       2 = SV1, ON -- SV2, OFF
 %       3 = SV1, OFF -- SV2, OFF
-pause( global_pause );wordwrite( roach, 'ADDITION_MUX_SELECT_1', 0 );
-pause( global_pause );wordwrite( roach, 'ADDITION_MUX_SELECT_2', 0 );
+pause( global_pause );wordwrite( roach, 'ADDITION_MUX_SELECT_1', 2 );
+pause( global_pause );wordwrite( roach, 'ADDITION_MUX_SELECT_2', 3 );
 
 
 % Reset GLOBAL_RESET to start transmission
