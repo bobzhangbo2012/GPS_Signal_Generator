@@ -19,7 +19,7 @@ roach_connected = 0;
 while ~roach_connected
     try
         % Define which firmware to upload
-        fw = 'gps_full_signal_2017_May_29_1638.bof'; % .bof file
+        fw = 'gps_full_signal_2017_Jun_07_2247.bof'; % .bof file
 
         rhost = '192.168.4.117'; % IP Address for roach being used
 
@@ -47,10 +47,10 @@ end
 fprintf('\n');
 
 % Select the SV
-sv_1 = 18;
-sv_2 = 20;
-sv_3 = 22;
-sv_4 = 29;
+sv_1 = 6;
+sv_2 = 10;
+sv_3 = 18;
+sv_4 = 30;
 
 selected_bit_sv1 = SelectSatellite( sv_1 );
 selected_bit_sv2 = SelectSatellite( sv_2 );
@@ -87,39 +87,70 @@ end
 % Clean up created file
 delete *.alm;
 
+% % Write to Selector Bit registers
+% pause( global_pause );wordwrite( roach, 'G2_1_SV_SEL_REG1', (selected_bit_sv1(1,1) - 1)*(2^28) );
+% pause( global_pause );wordwrite( roach, 'G2_1_SV_SEL_REG2', (selected_bit_sv1(1,2) - 1)*(2^28) );
+% 
+% pause( global_pause );wordwrite( roach, 'G2_2_SV_SEL_REG1', (selected_bit_sv2(1,1) - 1)*(2^28) );
+% pause( global_pause );wordwrite( roach, 'G2_2_SV_SEL_REG2', (selected_bit_sv2(1,2) - 1)*(2^28) );
+% 
+% pause( global_pause );wordwrite( roach, 'G2_3_SV_SEL_REG1', (selected_bit_sv3(1,1) - 1)*(2^28) );
+% pause( global_pause );wordwrite( roach, 'G2_3_SV_SEL_REG2', (selected_bit_sv3(1,2) - 1)*(2^28) );
+% 
+% pause( global_pause );wordwrite( roach, 'G2_4_SV_SEL_REG1', (selected_bit_sv4(1,1) - 1)*(2^28) );
+% pause( global_pause );wordwrite( roach, 'G2_4_SV_SEL_REG2', (selected_bit_sv4(1,2) - 1)*(2^28) );
 % Write to Selector Bit registers
-wordwrite( roach, 'G2_1_SV_SEL_SEL_REG1', selected_bit_sv1(1,1) - 1 );
-wordwrite( roach, 'G2_1_SV_SEL_SEL_REG2', selected_bit_sv1(1,2) - 1 );
+pause( global_pause );wordwrite( roach, 'G2_1_SV_SEL_REG1', (selected_bit_sv1(1,1)-1));
+pause( global_pause );wordwrite( roach, 'G2_1_SV_SEL_REG2', (selected_bit_sv1(1,2)-1));
 
-wordwrite( roach, 'G2_2_SV_SEL_SEL_REG1', selected_bit_sv2(1,1) - 1 );
-wordwrite( roach, 'G2_2_SV_SEL_SEL_REG2', selected_bit_sv2(1,2) - 1);
+pause( global_pause );wordwrite( roach, 'G2_2_SV_SEL_REG1', (selected_bit_sv2(1,1)-1));
+pause( global_pause );wordwrite( roach, 'G2_2_SV_SEL_REG2', (selected_bit_sv2(1,2)-1));
 
-wordwrite( roach, 'G2_3_SV_SEL_SEL_REG1', selected_bit_sv3(1,1) - 1 );
-wordwrite( roach, 'G2_3_SV_SEL_SEL_REG2', selected_bit_sv3(1,2) - 1);
+pause( global_pause );wordwrite( roach, 'G2_3_SV_SEL_REG1', (selected_bit_sv3(1,1)-1));
+pause( global_pause );wordwrite( roach, 'G2_3_SV_SEL_REG2', (selected_bit_sv3(1,2)-1));
+pause( global_pause );
+pause( global_pause );wordwrite( roach, 'G2_4_SV_SEL_REG1', (selected_bit_sv4(1,1)-1));
+pause( global_pause );wordwrite( roach, 'G2_4_SV_SEL_REG2', (selected_bit_sv4(1,2)-1));
 
-wordwrite( roach, 'G2_4_SV_SEL_SEL_REG1', selected_bit_sv4(1,1) - 1 );
-wordwrite( roach, 'G2_4_SV_SEL_SEL_REG2', selected_bit_sv4(1,2) - 1 );
+
 
 % Ensure PRN Signal is turned ON ( Set:  PRN_SHUTDOWN_SWITCH to 0)
 %   PRN_SHUTDOWN_SWITCH controls a MUX that selected between a constant
 %   zero ( 0 ) or the PRN signal ouput.
 % PRN_SHUTDOWN_SWITCH = 0 = PRN is ON
 % PRN_SHUTDOWN_SWITCH = 1 = PRN is OFF
-wordwrite( roach, 'PRN_SHUTDOWN_SWITCH' , 0);
+pause( global_pause );wordwrite( roach, 'PRN_SHUTDOWN_SWITCH' , 0);
 
 % MESSAGE_SHUTDOWN_SWITCH = 0 = MESSAGE DATA ON
 % MESSAGE_SHUTDOWN_SWITCH = 1 = MESSAGE DATA OFF
-wordwrite( roach, 'MESSAGE_SHUTDOWN_SWITCH2', 0);
+pause( global_pause );wordwrite( roach, 'MESSAGE_SHUTDOWN_SWITCH2', 0);
 
 % MESSAGE_CLK_SELECT = 0 = CLK PRN CLOCK (1.023 MHZ)
 % MESSAGE_CLK_SELECT = 1 = MESSAGE CLK (50 bps)
-wordwrite( roach, 'MESSAGE_CLK_SELECT', 1);
+pause( global_pause );wordwrite( roach, 'MESSAGE_CLK_SELECT', 1);
+
+% Set BRAM_DELAY_REG value.
+pause( global_pause );wordwrite( roach, 'Message_Signal1_BRAM_DELAY_REG', 0 );
+pause( global_pause );wordwrite( roach, 'Message_Signal2_BRAM_DELAY_REG', 0 );
+pause( global_pause );wordwrite( roach, 'Message_Signal3_BRAM_DELAY_REG', 0 );
+pause( global_pause );wordwrite( roach, 'Message_Signal4_BRAM_DELAY_REG', 0 );
+
+% Controlable addition block logic.
+%   Each of the 4 SVs can be controlled by setting the register
+%   ADDITION_MUX_SELECT 1 or 2
+%   Setting ADDITION_MUX_SELECT_:
+%       0 = SV1, ON -- SV2, ON
+%       1 = SV1, OFF -- SV2, ON
+%       2 = SV1, ON -- SV2, OFF
+%       3 = SV1, OFF -- SV2, OFF
+pause( global_pause );wordwrite( roach, 'ADDITION_MUX_SELECT_1', 0 );
+pause( global_pause );wordwrite( roach, 'ADDITION_MUX_SELECT_2', 0 );
+
 
 % Reset GLOBAL_RESET to start transmission
-%pause( global_pause ); wordwrite( roach, 'GLOBAL_RESET',0);
-
-wordwrite( roach, 'DAC_dac_reset', 1 );
-wordwrite( roach, 'DAC_dac_reset', 0 );
+%pause( global_pause ); wordwrite( roach, 'GLOBAL_RESET',0)
+pause( global_pause );wordwrite( roach, 'DAC_dac_reset', 1 );
+pause( global_pause );wordwrite( roach, 'DAC_dac_reset', 0 );
 
 % Write the message signal bits to BRAM
 %   Make sure that the message signal are in BYTES before being written

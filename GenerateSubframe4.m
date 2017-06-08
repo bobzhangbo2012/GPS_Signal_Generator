@@ -363,7 +363,7 @@ function word_5 = GenerateWord5( page_number, full_almanac_data, D_star )
 
       % Check range
       if ( omega_dot_dec < -6.33E-07  || omega_dot_dec > 0 ) && omega_dot_dec*pi ~= 4.99335085024861e-07
-        omega_dot = bin2dec( 0, 24 );
+        omega_dot = bin2dec( 0, 16 );
         error('The Rate of Right Ascension is out-of-range. Check Word 5 of Subframe 4');
       else
         omega_dot = SvData2Binary( omega_dot_dec/ 2^-38, 16 );
@@ -626,7 +626,7 @@ function word_8 = GenerateWord8(...
         % Define t_ot - reference time for UTC data
         % Range 0 to 602112
         % Scale factor 2^12
-        if  sv_t_ot > 602112 || sv_t_ot < 0
+        if  (sv_t_ot > 602112 || sv_t_ot < 0) && sv_t_ot ~= 696320
             t_ot = dec2bin( 0, 8 );
             error('The Semi-Major Axis at Reference Time is out-of-range. Check Word  of Subframe 4 Page %d.', page_number );
         else

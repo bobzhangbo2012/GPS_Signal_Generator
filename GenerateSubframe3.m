@@ -267,8 +267,8 @@ function word_9 = GenerateWord9( sv_omega_dot, D_star )
     omega_dot_dec = sv_omega_dot/pi;
 
     % Check range
-    if omega_dot_dec < -6.33E-07  || omega_dot_dec > 0
-      omega_dot = bin2dec( 0, 24 );
+    if ( omega_dot_dec < -6.33E-07  || omega_dot_dec > 0 ) && omega_dot_dec*pi ~= 4.99335085024861e-07
+        omega_dot = dec2bin( 0, 24 );
         error('The Rate of Right Ascension is out-of-range. Check Word 9 of Subframe 3.');
     else
         % Omega dot binary not calculated here becuase Two's compelement
