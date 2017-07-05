@@ -208,8 +208,8 @@ pause( global_pause );wordwrite( roach, 'Message_Signal4_BRAM_DELAY_REG', 0 );
 %       1 = SV1, OFF -- SV2, ON
 %       2 = SV1, ON -- SV2, OFF
 %       3 = SV1, OFF -- SV2, OFF
-pause( global_pause );wordwrite( roach, 'ADDITION_MUX_SELECT_1', 0 );
-pause( global_pause );wordwrite( roach, 'ADDITION_MUX_SELECT_2', 0 );
+pause( global_pause );wordwrite( roach, 'ADDITION_MUX_SELECT_1', 1 );
+pause( global_pause );wordwrite( roach, 'ADDITION_MUX_SELECT_2', 3 );
 
 
 % Reset GLOBAL_RESET to start transmission
