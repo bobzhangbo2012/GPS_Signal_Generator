@@ -13,7 +13,7 @@ function full_almanac_data = fetchYumaData()
     %   because it increases the current day faster than the website.
     current_date = clock;
     year = current_date(1);
-    day_of_year = floor( now - datenum( year, 1, 0, 0, 0, 0 )) - 1;
+    day_of_year = floor( now - datenum( year, 1, 0, 0, 0, 0 ));
     fprintf('Today is day number %d of the year %d.\n',  day_of_year, year );
     % print a empty line for spacing
     fprintf('\n');
